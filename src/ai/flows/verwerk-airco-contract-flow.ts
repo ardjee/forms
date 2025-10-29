@@ -4,6 +4,7 @@ import { z } from 'genkit';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type {formSchema as AircoContractSchema} from '@/components/AircoContractForm';
+import { sendConfirmationEmail } from '@/lib/email/sendConfirmation';
 
 export type AircoContractData = z.infer<typeof AircoContractSchema>;
 
@@ -36,8 +37,22 @@ const verwerkAircoContractFlow = ai.defineFlow(
       };
 
       await setDoc(docRef, dataToSave);
-      
+
       console.log(`Airco Contract opgeslagen met ID: ${documentId}`);
+
+      // Send confirmation email to customer
+      try {
+        await sendConfirmationEmail({
+          to: formData.klantEmail,
+          name: formData.klantNaam,
+        });
+        console.log(`Confirmation email sent to: ${formData.klantEmail}`);
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError);
+        // Don't fail the entire submission if email fails
+        // The contract is still saved successfully
+      }
+
       return { success: true, documentId };
 
     } catch (error) {
