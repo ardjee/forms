@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { verwerkAircoContract } from "@/ai/flows/verwerk-airco-contract-flow";
@@ -148,18 +149,22 @@ const ToestelCard = ({ form, toestelNum }: { form: any, toestelNum: 1 | 2 }) => 
         </div>
         <Separator />
         <FormField control={form.control} name={`${fieldName}.abonnement`} render={({ field }) => (
-          <FormItem className="space-y-3">
+          <FormItem>
             <FormLabel>Onderhoudsabonnement</FormLabel>
-            <FormControl>
-              <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecteer onderhoudsabonnement" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
                 {abonnementen.map(opt => (
-                  <FormItem key={opt.value} className="flex items-center space-x-3 space-y-0">
-                    <FormControl><RadioGroupItem value={opt.value} /></FormControl>
-                    <FormLabel className="font-normal">{opt.label}</FormLabel>
-                  </FormItem>
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
                 ))}
-              </RadioGroup>
-            </FormControl>
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )} />
@@ -294,20 +299,24 @@ export function AircoContractForm() {
           <CardHeader><CardTitle>Toeslagen & Ingangsdatum</CardTitle></CardHeader>
           <CardContent className="space-y-6">
             <FormField control={form.control} name="reisToeslag" render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Reis- en km-toeslag (indien van toepassing)</FormLabel>
-                <FormControl>
-                  <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl><RadioGroupItem value="15-30km" /></FormControl>
-                      <FormLabel className="font-normal">15-30 km (€5,75 per maand)</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl><RadioGroupItem value="31-50km" /></FormControl>
-                      <FormLabel className="font-normal">31-50 km (€9,40 per maand)</FormLabel>
-                    </FormItem>
-                  </RadioGroup>
-                </FormControl>
+              <FormItem>
+                <FormLabel>Reis- en km-toeslag (optioneel)</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Geen toeslag" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="geen">Geen toeslag</SelectItem>
+                    <SelectItem value="15-30km">15-30 km (€5,75 per maand)</SelectItem>
+                    <SelectItem value="31-50km">31-50 km (€9,40 per maand)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Alleen van toepassing indien u buiten ons standaard verzorgingsgebied woont
+                </FormDescription>
+                <FormMessage />
               </FormItem>
             )} />
             <Separator />

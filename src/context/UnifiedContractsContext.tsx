@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { collection, getDocs, deleteDoc, doc, query, orderBy, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { UnifiedContract } from '@/types';
+import { sendAcceptanceEmail } from '@/lib/email/sendAcceptance';
 
 interface UnifiedContractsContextValue {
   contracts: UnifiedContract[];
@@ -68,6 +69,51 @@ export function UnifiedContractsProvider({ children }: { children: ReactNode }) 
       setContracts(prev => prev.map(c =>
         ids.includes(c.id) ? { ...c, status } : c
       ));
+
+      // Send acceptance email if status is 'Actief'
+      if (status === 'Actief') {
+        const acceptedContracts = contracts.filter(c => ids.includes(c.id));
+
+        for (const contract of acceptedContracts) {
+          try {
+            // Prepare contract type label
+            const contractTypeLabels: Record<string, string> = {
+              'cv-ketel': 'CV-ketel',
+              'warmtepomp-all-electric': 'Warmtepomp All-electric',
+              'warmtepomp-hybride': 'Warmtepomp Hybride',
+              'warmtepomp-grondgebonden': 'Warmtepomp Grondgebonden',
+              'airco': 'Airco',
+              'luchtverwarmer': 'Luchtverwarmer',
+              'gasboiler': 'Gasboiler',
+              'gashaard-kachel': 'Gashaard / Kachel',
+              'geiser': 'Geiser',
+              'mechanische-ventilatiebox': 'Mechanische Ventilatiebox',
+              'warmtepompboiler': 'Warmtepompboiler',
+              'warmte-terugwin-unit': 'Warmte-Terugwin-Unit',
+              'zonneboiler': 'Zonneboiler',
+            };
+
+            const abonnementLabels: Record<string, string> = {
+              'onderhoud': 'Onderhoud',
+              'service-plus': 'Service Plus',
+            };
+
+            await sendAcceptanceEmail({
+              to: contract.klantEmail,
+              name: contract.klantNaam,
+              contractType: contractTypeLabels[contract.contractType] || contract.contractType,
+              abonnement: abonnementLabels[contract.typeAbonnement] || contract.typeAbonnement || 'Standaard',
+              frequentie: `${contract.onderhoudsfrequentie} maanden`,
+              maandPrijs: contract.maandelijksePrijs || 0,
+            });
+
+            console.log(`Acceptance email sent to: ${contract.klantEmail}`);
+          } catch (emailError) {
+            console.error(`Failed to send acceptance email to ${contract.klantEmail}:`, emailError);
+            // Don't throw - we don't want email failures to prevent status updates
+          }
+        }
+      }
     } catch (err: any) {
       console.error('Error updating contract status:', err);
       throw err;
