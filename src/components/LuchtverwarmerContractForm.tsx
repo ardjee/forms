@@ -179,7 +179,7 @@ export function LuchtverwarmerContractForm() {
       const maandelijksePrijs = berekenMaandelijkeKosten(
         values.onderhoudsfrequentie,
         values.typeAbonnement,
-        values.
+        values.monitoring,
         values.voorrijdkosten
       );
 

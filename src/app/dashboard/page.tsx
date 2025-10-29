@@ -415,7 +415,7 @@ function UnifiedDataPageContent() {
         escapeCsvField(contract.monitoring || ''),
         // Toeslag & Betaling
         escapeCsvField(contract.voorrijdkosten || contract.toeslag || ''),
-        escapeCsvField(contract.maandelijksePrijs ? `€${contract.maandelijksePrijs.toFixed(2)}` : ''),
+        escapeCsvField(contract.maandelijksePrijs != null ? `€${contract.maandelijksePrijs.toFixed(2)}` : ''),
         // Contract details
         escapeCsvField(contract.ingangsdatum ? format(parseISO(contract.ingangsdatum), 'yyyy-MM-dd') : ''),
         escapeCsvField(contract.iban ? '****' + contract.iban.slice(-4) : ''),
