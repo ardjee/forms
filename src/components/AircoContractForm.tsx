@@ -56,7 +56,10 @@ export const formSchema = z.object({
   toestel2: toestelSchema.optional(),
 
   reisToeslag: z.string().optional(),
-  
+
+  // Betaling
+  iban: z.string().regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}$/i, "Ongeldig IBAN-formaat."),
+
   akkoordVoorwaarden: z.literal(true, {
     errorMap: () => ({ message: "U moet akkoord gaan met de algemene voorwaarden." }),
   }),
@@ -193,6 +196,7 @@ export function AircoContractForm() {
       heeftExtraToestel: false,
       toestel1: { abonnement: "" },
       toestel2: { abonnement: "" },
+      iban: "",
       akkoordVoorwaarden: false,
     },
   });
@@ -316,6 +320,22 @@ export function AircoContractForm() {
           </CardContent>
         </Card>
         
+        <Card>
+          <CardHeader><CardTitle>Betaalgegevens</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <FormField control={form.control} name="iban" render={({ field }) => (
+              <FormItem>
+                <FormLabel>IBAN-nummer</FormLabel>
+                <FormControl><Input {...field} placeholder="NL00BANK0123456789" /></FormControl>
+                <FormDescription>
+                  Het maandelijkse bedrag wordt automatisch geïncasseerd van dit rekeningnummer.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader><CardTitle>Akkoord</CardTitle></CardHeader>
           <CardContent>
