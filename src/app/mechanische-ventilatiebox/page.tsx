@@ -1,0 +1,28 @@
+import { MechanischeVentilatieboxContractForm } from "@/components/MechanischeVentilatieboxContractForm"
+import { Button } from "@/components/ui/button"
+import { ArrowLeft, Fan } from "lucide-react"
+import Link from "next/link"
+
+export default function MechanischeVentilatieboxPage() {
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <div className="mb-6">
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Terug naar overzicht
+          </Link>
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-3 mb-6">
+        <Fan className="h-8 w-8 text-primary" />
+        <h1 className="text-3xl font-bold">
+          Inschrijfformulier Onderhoudsabonnement Mechanische Ventilatiebox (MV-box)
+        </h1>
+      </div>
+
+      <MechanischeVentilatieboxContractForm />
+    </div>
+  )
+}
