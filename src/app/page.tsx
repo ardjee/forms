@@ -206,12 +206,12 @@ export default function TarievenPage() {
                 </TableRow>
                 <TableRow>
                   <TableCell className="text-xs sm:text-sm">Voorrijkosten bij storing</TableCell>
-                  <TableCell className="text-center text-xs sm:text-sm">Geen</TableCell>
+                  <TableCell className="text-center text-xs sm:text-sm">Ja</TableCell>
                   <TableCell className="text-center text-xs sm:text-sm">Geen</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell className="text-xs sm:text-sm">Arbeidsloon bij storing</TableCell>
-                  <TableCell className="text-center text-xs sm:text-sm">Geen</TableCell>
+                  <TableCell className="text-center text-xs sm:text-sm">Uurloon</TableCell>
                   <TableCell className="text-center text-xs sm:text-sm">Geen</TableCell>
                 </TableRow>
                 <TableRow>
@@ -221,12 +221,12 @@ export default function TarievenPage() {
                 </TableRow>
                  <TableRow>
                   <TableCell className="text-xs sm:text-sm">Prioriteit bij storingen</TableCell>
-                  <TableCell className="text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></TableCell>
+                  <TableCell className="text-center"><X className="h-5 w-5 text-destructive mx-auto" /></TableCell>
                   <TableCell className="text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell className="text-xs sm:text-sm">Storing verhelpen</TableCell>
-                  <TableCell className="text-center"><X className="h-5 w-5 text-destructive mx-auto" /></TableCell>
+                  <TableCell className="text-center text-xs sm:text-sm">Betaald</TableCell>
                   <TableCell className="text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></TableCell>
                 </TableRow>
                 <TableRow>
