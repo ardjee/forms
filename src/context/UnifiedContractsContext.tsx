@@ -4,7 +4,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { collection, getDocs, deleteDoc, doc, query, orderBy, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { UnifiedContract } from '@/types';
-import { sendAcceptanceEmail } from '@/lib/email/sendAcceptance';
+// Removed direct import of sendAcceptanceEmail to avoid client-side secret usage
+// import { sendAcceptanceEmail } from '@/lib/email/sendAcceptance';
 
 interface UnifiedContractsContextValue {
   contracts: UnifiedContract[];
@@ -109,7 +110,6 @@ export function UnifiedContractsProvider({ children }: { children: ReactNode }) 
               { label: 'IBAN', value: contract.iban },
             ].filter((x): x is { label: string; value: string } => !!x && x.value !== '' && x.value !== 'undefined');
 
-            // Prepare contract type label
             const contractTypeLabels: Record<string, string> = {
               'cv-ketel': 'CV-ketel',
               'warmtepomp-all-electric': 'Warmtepomp All-electric',
@@ -131,17 +131,22 @@ export function UnifiedContractsProvider({ children }: { children: ReactNode }) 
               'service-plus': 'Service Plus',
             };
 
-            await sendAcceptanceEmail({
-              to: contract.klantEmail,
-              name: contract.klantNaam,
-              contractType: contractTypeLabels[contract.contractType] || contract.contractType,
-              abonnement: abonnementLabels[contract.typeAbonnement] || contract.typeAbonnement || 'Standaard',
-              frequentie: `${contract.onderhoudsfrequentie} maanden`,
-              maandPrijs: contract.maandelijksePrijs || 0,
-              details,
+            // Call server API to send email (server has access to secrets)
+            await fetch('/api/send-acceptance', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: contract.klantEmail,
+                name: contract.klantNaam,
+                contractType: contractTypeLabels[contract.contractType] || contract.contractType,
+                abonnement: abonnementLabels[contract.typeAbonnement] || contract.typeAbonnement || 'Standaard',
+                frequentie: `${contract.onderhoudsfrequentie} maanden`,
+                maandPrijs: contract.maandelijksePrijs || 0,
+                details,
+              }),
             });
 
-            console.log(`Acceptance email sent to: ${contract.klantEmail}`);
+            console.log(`Acceptance email requested for: ${contract.klantEmail}`);
           } catch (emailError) {
             console.error(`Failed to send acceptance email to ${contract.klantEmail}:`, emailError);
             // Don't throw - we don't want email failures to prevent status updates
