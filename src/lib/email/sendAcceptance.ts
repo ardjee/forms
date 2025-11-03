@@ -5,13 +5,14 @@ export interface SendAcceptanceEmailOptions {
   to: string;
   name: string;
   contractType: string;
-  abonnement: string;
+  abonnement?: string;
   frequentie: string;
   maandPrijs: number;
+  details?: { label: string; value: string }[];
 }
 
 export async function sendAcceptanceEmail(options: SendAcceptanceEmailOptions) {
-  const { to, name, contractType, abonnement, frequentie, maandPrijs } = options;
+  const { to, name, contractType, abonnement, frequentie, maandPrijs, details } = options;
 
   // Check if API key exists
   if (!process.env.RESEND_API_KEY) {
@@ -23,9 +24,10 @@ export async function sendAcceptanceEmail(options: SendAcceptanceEmailOptions) {
     name,
     email: to,
     contractType,
-    abonnement,
+    abonnement: abonnement || 'Standaard',
     frequentie,
     maandPrijs: `€${maandPrijs.toFixed(2)} per maand`,
+    details,
   };
 
   try {

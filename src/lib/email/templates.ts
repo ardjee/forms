@@ -10,6 +10,7 @@ export interface AcceptanceEmailData {
   abonnement: string;
   frequentie: string;
   maandPrijs: string;
+  details?: { label: string; value: string }[];
 }
 
 export function generateConfirmationEmailHtml(data: ConfirmationEmailData): string {
@@ -116,6 +117,26 @@ export function generateAcceptanceEmailHtml(data: AcceptanceEmailData): string {
                 </p>
               </div>
 
+              ${Array.isArray(data.details) && data.details.length > 0 ? `
+              <div style="margin: 20px 0;">
+                <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                  <strong>Uw keuzes uit het formulier:</strong>
+                </p>
+                <table role="presentation" style="width: 100%; border-collapse: collapse; background: #ffffff;">
+                  <tbody>
+                    ${data.details
+                      .map(item => `
+                        <tr>
+                          <td style=\"padding: 10px 12px; border: 1px solid #e5e7eb; width: 45%; background: #f9fafb; color: #374151; font-size: 14px;\">${item.label}</td>
+                          <td style=\"padding: 10px 12px; border: 1px solid #e5e7eb; color: #111827; font-size: 14px;\">${item.value}</td>
+                        </tr>
+                      `)
+                      .join('')}
+                  </tbody>
+                </table>
+              </div>
+              ` : ''}
+
               <p style="margin: 20px 0; color: #666666; font-size: 16px; line-height: 1.6;">
                 We danken u voor het vertrouwen in ZON-ECN en hopen op een lange en goede samenwerking.
               </p>
@@ -158,6 +179,9 @@ Met vriendelijke groet,
 Hugo
 ZON-ECN
 
- 
+${Array.isArray(data.details) && data.details.length > 0 ? `
+Uw keuzes uit het formulier:
+${data.details.map(d => `- ${d.label}: ${d.value}`).join('\\n')}
+` : ''}
   `.trim();
 }
