@@ -32,7 +32,7 @@ export async function sendAcceptanceEmail(options: SendAcceptanceEmailOptions) {
     console.log(`[EMAIL] Attempting to send acceptance email to: ${to}`);
 
     const { data, error } = await resend.emails.send({
-      from: 'ZON-ECN <onboarding@resend.dev>',
+      from: 'ZON-ECN <onderhoud@zon-ecn.nl>',
       to: [to],
       subject: 'Uw aanvraag bij ZON-ECN is goedgekeurd!',
       html: generateAcceptanceEmailHtml(emailData),

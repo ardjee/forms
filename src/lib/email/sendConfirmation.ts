@@ -24,7 +24,7 @@ export async function sendConfirmationEmail(options: SendConfirmationEmailOption
     console.log(`[EMAIL] Attempting to send confirmation email to: ${to}`);
 
     const { data, error } = await resend.emails.send({
-      from: 'ZON-ECN <onboarding@resend.dev>',
+      from: 'ZON-ECN <onderhoud@zon-ecn.nl>',
       to: [to],
       subject: 'We hebben uw ZON-ECN onderhoudscontract aanvraag ontvangen!',
       html: generateConfirmationEmailHtml(emailData),
