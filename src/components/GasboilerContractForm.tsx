@@ -91,6 +91,7 @@ const prijzenMap: Record<string, Record<string, number>> = {
 
 
 const voorrijdkostenPrijzen: Record<string, number> = {
+  '0-15km': 0,
   '15-30km': 5.75,
   '31-50km': 9.40
 };
@@ -137,7 +138,7 @@ export function GasboilerContractForm() {
       toestelTelefoon: "",
       onderhoudsfrequentie: undefined,
       typeAbonnement: undefined,
-      
+      voorrijdkosten: "0-15km",
       akkoordVoorwaarden: false,
       iban: "",
     },
@@ -335,6 +336,33 @@ export function GasboilerContractForm() {
                     <p className="text-xs text-muted-foreground mt-1">Inclusief eventuele voorrijdkosten</p>
                   </div>
                 )}
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader><CardTitle>Toeslag & Betaling</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+                <FormField control={form.control} name="voorrijdkosten" render={({ field }) => (
+                    <FormItem className="space-y-3">
+                        <FormLabel>Boven de 15 km is er een reis- en km-toeslag van toepassing:</FormLabel>
+                        <FormControl>
+                            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-2">
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl><RadioGroupItem value="0-15km" /></FormControl>
+                                    <FormLabel className="font-normal">0-15 km (geen kosten)</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl><RadioGroupItem value="15-30km" /></FormControl>
+                                    <FormLabel className="font-normal">Bij 15-30 km à € 5,75 per maand</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl><RadioGroupItem value="31-50km" /></FormControl>
+                                    <FormLabel className="font-normal">Bij 31-50 km à € 9,40 per maand</FormLabel>
+                                </FormItem>
+                            </RadioGroup>
+                        </FormControl>
+                    </FormItem>
+                )} />
             </CardContent>
         </Card>
 

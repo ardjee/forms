@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo, useEffect, useRef, type ReactNode } from 'react';
 import {
   Table,
   TableBody,
@@ -65,8 +65,91 @@ export function GenericOverviewTable<T extends { id: string }>({
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: defaultSortKey, direction: 'desc' });
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
+  
+  // Refs for sticky scrollbar
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const stickyScrollbarRef = useRef<HTMLDivElement>(null);
+  const stickyScrollbarContentRef = useRef<HTMLDivElement>(null);
+  const [showStickyScrollbar, setShowStickyScrollbar] = useState(false);
+  const [stickyScrollbarPosition, setStickyScrollbarPosition] = useState({ left: 0, width: 0 });
+  
   const selectedIds = useMemo(() => Object.keys(selection).filter(id => selection[id]), [selection]);
+
+  // Sync scrollbar with table
+  useEffect(() => {
+    const tableContainer = tableContainerRef.current;
+    const stickyScrollbar = stickyScrollbarRef.current;
+    const stickyScrollbarContent = stickyScrollbarContentRef.current;
+
+    if (!tableContainer || !stickyScrollbar || !stickyScrollbarContent) return;
+
+    // Update sticky scrollbar width and position to match table
+    const updateScrollbar = () => {
+      const tableWrapper = tableContainer.querySelector('.relative.w-full') as HTMLElement;
+      if (tableWrapper) {
+        const table = tableWrapper.querySelector('table') as HTMLElement;
+        if (table) {
+          const tableRect = tableWrapper.getBoundingClientRect();
+          const isOverflowing = table.scrollWidth > tableWrapper.clientWidth;
+          
+          // Always show sticky scrollbar if table overflows horizontally
+          setShowStickyScrollbar(isOverflowing);
+          
+          // Update scrollbar dimensions and position
+          stickyScrollbarContent.style.width = `${table.scrollWidth}px`;
+          setStickyScrollbarPosition({
+            left: tableRect.left,
+            width: tableWrapper.clientWidth
+          });
+        }
+      }
+    };
+
+    // Sync scroll from table to sticky scrollbar
+    const handleTableScroll = (e: Event) => {
+      if (stickyScrollbar) {
+        stickyScrollbar.scrollLeft = (e.target as HTMLElement).scrollLeft;
+      }
+    };
+
+    // Sync scroll from sticky scrollbar to table
+    const handleStickyScroll = (e: Event) => {
+      const tableWrapper = tableContainer.querySelector('.relative.w-full') as HTMLElement;
+      if (tableWrapper) {
+        tableWrapper.scrollLeft = (e.target as HTMLElement).scrollLeft;
+      }
+    };
+
+    // Check visibility on scroll
+    const handleWindowScroll = () => {
+      updateScrollbar();
+    };
+
+    const tableWrapper = tableContainer.querySelector('.relative.w-full') as HTMLElement;
+    if (tableWrapper) {
+      tableWrapper.addEventListener('scroll', handleTableScroll);
+      stickyScrollbar.addEventListener('scroll', handleStickyScroll);
+      window.addEventListener('scroll', handleWindowScroll);
+      
+      // Initial update
+      updateScrollbar();
+      
+      // Update on window resize
+      window.addEventListener('resize', updateScrollbar);
+      
+      // Update when data changes
+      const resizeObserver = new ResizeObserver(updateScrollbar);
+      resizeObserver.observe(tableWrapper);
+
+      return () => {
+        tableWrapper.removeEventListener('scroll', handleTableScroll);
+        stickyScrollbar.removeEventListener('scroll', handleStickyScroll);
+        window.removeEventListener('scroll', handleWindowScroll);
+        window.removeEventListener('resize', updateScrollbar);
+        resizeObserver.disconnect();
+      };
+    }
+  }, [data]);
 
   const handleSelectAll = (checked: boolean) => {
     const newSelection: Record<string, boolean> = {};
@@ -130,7 +213,7 @@ export function GenericOverviewTable<T extends { id: string }>({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={tableContainerRef}>
       <div className="flex justify-between items-center">
         <Input
           placeholder={`Filter ${entityName}...`}
@@ -160,17 +243,24 @@ export function GenericOverviewTable<T extends { id: string }>({
         </div>
       </div>
       <div className="rounded-md border">
-        <Table>
-          <TableCaption>{caption}</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">
-                <Checkbox
-                  checked={selectedIds.length > 0 && selectedIds.length === filteredData.length}
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all"
-                />
-              </TableHead>
+        <div 
+          className="relative w-full overflow-x-auto overflow-y-visible [&::-webkit-scrollbar]:hidden"
+          style={{ 
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
+          <Table style={{ minWidth: '100%', width: 'max-content' }}>
+            <TableCaption>{caption}</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={selectedIds.length > 0 && selectedIds.length === filteredData.length}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
               {columns.map(col => (
                 <TableHead key={col.key}>
                   {col.sortable ? (
@@ -183,36 +273,54 @@ export function GenericOverviewTable<T extends { id: string }>({
                   )}
                 </TableHead>
               ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? renderLoadingState() : (
-              sortedData.length > 0 ? (
-                sortedData.map(item => (
-                  <TableRow key={item.id} data-state={selection[item.id] && "selected"}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selection[item.id] || false}
-                        onCheckedChange={(checked) => handleSelectRow(item.id, !!checked)}
-                        aria-label={`Select row ${item.id}`}
-                      />
-                    </TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? renderLoadingState() : (
+                sortedData.length > 0 ? (
+                  sortedData.map(item => (
+                    <TableRow key={item.id} data-state={selection[item.id] && "selected"}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selection[item.id] || false}
+                          onCheckedChange={(checked) => handleSelectRow(item.id, !!checked)}
+                          aria-label={`Select row ${item.id}`}
+                        />
+                      </TableCell>
                     {columns.map(col => (
                       <TableCell key={col.key}>{col.renderCell(item)}</TableCell>
                     ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length + 1} className="h-24 text-center">
+                      No results.
+                    </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length + 1} className="h-24 text-center">
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )
-            )}
-          </TableBody>
-        </Table>
+                )
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
+      
+      {/* Sticky scrollbar at bottom of viewport */}
+      {showStickyScrollbar && (
+        <div 
+          ref={stickyScrollbarRef}
+          className="fixed bottom-0 h-5 overflow-x-auto overflow-y-hidden bg-white border-t-2 border-gray-300 shadow-lg z-50 [&::-webkit-scrollbar]:h-4 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:hover:bg-gray-500"
+          style={{ 
+            left: `${stickyScrollbarPosition.left}px`,
+            width: `${stickyScrollbarPosition.width}px`,
+          }}
+        >
+          <div 
+            ref={stickyScrollbarContentRef}
+            className="h-full"
+          />
+        </div>
+      )}
 
        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>

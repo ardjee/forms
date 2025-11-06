@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { collection, getDocs, deleteDoc, doc, query, orderBy, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, query, orderBy, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { UnifiedContract } from '@/types';
 // Removed direct import of sendAcceptanceEmail to avoid client-side secret usage
@@ -13,6 +13,7 @@ interface UnifiedContractsContextValue {
   error: string | null;
   deleteContractsByIds: (ids: string[]) => Promise<void>;
   updateContractStatus: (ids: string[], status: 'Nieuw' | 'In behandeling' | 'Actief' | 'Geannuleerd') => Promise<void>;
+  updateContractField: (id: string, field: string, value: any) => Promise<void>;
   refreshContracts: () => Promise<void>;
 }
 
@@ -73,7 +74,15 @@ export function UnifiedContractsProvider({ children }: { children: ReactNode }) 
 
       // Send acceptance email if status is 'Actief'
       if (status === 'Actief') {
-        const acceptedContracts = contracts.filter(c => ids.includes(c.id));
+        // Fetch the latest contract data from Firestore to ensure we have the most recent changes
+        const acceptedContracts: UnifiedContract[] = [];
+        for (const id of ids) {
+          const docRef = doc(db, 'contracts', id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            acceptedContracts.push({ id: docSnap.id, ...docSnap.data() } as UnifiedContract);
+          }
+        }
 
         for (const contract of acceptedContracts) {
           try {
@@ -159,6 +168,20 @@ export function UnifiedContractsProvider({ children }: { children: ReactNode }) 
     }
   };
 
+  const updateContractField = async (id: string, field: string, value: any) => {
+    try {
+      await updateDoc(doc(db, 'contracts', id), { [field]: value });
+
+      // Update local state
+      setContracts(prev => prev.map(c =>
+        c.id === id ? { ...c, [field]: value } : c
+      ));
+    } catch (err: any) {
+      console.error('Error updating contract field:', err);
+      throw err;
+    }
+  };
+
   const refreshContracts = async () => {
     await fetchContracts();
   };
@@ -173,6 +196,7 @@ export function UnifiedContractsProvider({ children }: { children: ReactNode }) 
     error,
     deleteContractsByIds,
     updateContractStatus,
+    updateContractField,
     refreshContracts,
   };
 

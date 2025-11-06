@@ -104,6 +104,7 @@ const abonnementPrijzen: Record<string, number> = {
 };
 
 const voorrijdkostenPrijzen: Record<string, number> = {
+  '0-15km': 0,
   '15-30km': 5.75,
   '31-50km': 9.40
 };
@@ -201,6 +202,7 @@ export function AircoContractForm() {
       heeftExtraToestel: false,
       toestel1: { abonnement: "" },
       toestel2: { abonnement: "" },
+      reisToeslag: "0-15km",
       iban: "",
       akkoordVoorwaarden: false,
     },
@@ -308,7 +310,7 @@ export function AircoContractForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="geen">Geen toeslag</SelectItem>
+                    <SelectItem value="0-15km">0-15 km (geen kosten)</SelectItem>
                     <SelectItem value="15-30km">15-30 km (€5,75 per maand)</SelectItem>
                     <SelectItem value="31-50km">31-50 km (€9,40 per maand)</SelectItem>
                   </SelectContent>

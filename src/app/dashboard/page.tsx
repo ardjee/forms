@@ -51,7 +51,7 @@ interface CustomerGroup {
 }
 
 function UnifiedDataPageContent() {
-  const { contracts, isLoading, error, deleteContractsByIds, updateContractStatus } = useUnifiedContracts();
+  const { contracts, isLoading, error, deleteContractsByIds, updateContractStatus, updateContractField } = useUnifiedContracts();
   const { toast } = useToast();
   const { logout } = useAuth();
   const router = useRouter();
@@ -214,8 +214,19 @@ function UnifiedDataPageContent() {
       ),
     },
     {
+      key: 'klantAdres',
+      header: 'Adres',
+      sortable: true,
+      renderCell: (contract) => (
+        <div className="flex items-center gap-1">
+          <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+          <span className="text-xs truncate max-w-[150px]">{contract.klantAdres}</span>
+        </div>
+      ),
+    },
+    {
       key: 'klantWoonplaats',
-      header: 'Plaats',
+      header: 'Woonplaats',
       sortable: true,
       renderCell: (contract) => (
         <div className="flex items-center gap-1">
@@ -278,7 +289,35 @@ function UnifiedDataPageContent() {
       key: 'onderhoudsfrequentie',
       header: 'Freq.',
       sortable: true,
-      renderCell: (contract) => <span className="text-xs">{contract.onderhoudsfrequentie} mnd</span>,
+      renderCell: (contract) => (
+        <Select
+          value={String(contract.onderhoudsfrequentie)}
+          onValueChange={async (value) => {
+            try {
+              await updateContractField(contract.id, 'onderhoudsfrequentie', value);
+              toast({
+                title: "Frequentie bijgewerkt",
+                description: `Onderhoudsfrequentie aangepast naar ${value} maanden.`
+              });
+            } catch (error) {
+              toast({
+                title: "Fout",
+                description: "Kon frequentie niet bijwerken.",
+                variant: "destructive"
+              });
+            }
+          }}
+        >
+          <SelectTrigger className="w-[80px] h-7 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="12">12 mnd</SelectItem>
+            <SelectItem value="18">18 mnd</SelectItem>
+            <SelectItem value="24">24 mnd</SelectItem>
+          </SelectContent>
+        </Select>
+      ),
     },
     {
       key: 'monitoring',

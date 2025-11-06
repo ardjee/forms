@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = (password: string): boolean => {
     // Simple password check - you can change this password
-    const ADMIN_PASSWORD = 'FrietmetRiet';
+    const ADMIN_PASSWORD = 'Faradaystraat6718!';
     if (password === ADMIN_PASSWORD) {
       setIsAuthenticated(true);
       localStorage.setItem('isAuthenticated', 'true');

@@ -124,6 +124,7 @@ const prijzenMap: Record<string, Record<string, Record<string, number>>> = {
 };
 
 const voorrijdkostenPrijzen: Record<string, number> = {
+  '0-15km': 0,
   '15-30km': 5.75,
   '31-50km': 9.40
 };
@@ -177,7 +178,7 @@ export function CvContractForm() {
       cvVermogen: undefined,
       onderhoudsfrequentie: undefined,
       typeAbonnement: undefined,
-      voorrijdkosten: undefined,
+      voorrijdkosten: "0-15km",
       iban: "",
       akkoordVoorwaarden: false,
     },
@@ -363,7 +364,7 @@ export function CvContractForm() {
         <Card>
           <CardHeader>
             <CardTitle>Onderhoudsabonnement</CardTitle>
-            <CardDescription>Kies uw CV-vermogen, onderhoudsfrequentie en type abonnement</CardDescription>
+            <CardDescription>Kies uw CV-vermogen, onderhoudsfrequentie en type abonnement om uw tarief zichtbaar te maken</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -445,6 +446,10 @@ export function CvContractForm() {
                   <FormLabel>Voorrijdkosten (indien van toepassing)</FormLabel>
                   <FormControl>
                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-2">
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl><RadioGroupItem value="0-15km" /></FormControl>
+                        <FormLabel className="font-normal">0-15 km (geen kosten)</FormLabel>
+                      </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl><RadioGroupItem value="15-30km" /></FormControl>
                         <FormLabel className="font-normal">15-30 km (€5,75)</FormLabel>

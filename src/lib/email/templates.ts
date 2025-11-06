@@ -45,9 +45,9 @@ export function generateConfirmationEmailHtml(data: ConfirmationEmailData): stri
               </p>
 
               <p style="margin: 0 0 10px 0; color: #666666; font-size: 16px; line-height: 1.6;">
-                Met vriendelijke groet,<br>
-                <strong>Hugo</strong><br>
-                ZON-ECN
+                Met vriendelijke groet,<br><br>
+                <strong>ZON-ECN Installatietechniek</strong><br>
+                Hugo Schneider
               </p>
             </td>
           </tr>
@@ -74,8 +74,9 @@ Bedankt voor uw aanvraag!
 U hoort zo spoedig mogelijk van ons of uw aanvraag akkoord is en in kan gaan per 01-01-2026. Mochten we naar aanleiding van de verstrekte gegevens toch nog vragen hebben, dan nemen we contact op per e-mail of telefoon.
 
 Met vriendelijke groet,
-Hugo
-ZON-ECN
+
+ZON-ECN Installatietechniek
+Hugo Schneider
 
  
   `.trim();
@@ -142,9 +143,9 @@ export function generateAcceptanceEmailHtml(data: AcceptanceEmailData): string {
               </p>
 
               <p style="margin: 0 0 10px 0; color: #666666; font-size: 16px; line-height: 1.6;">
-                Met vriendelijke groet,<br>
-                <strong>Hugo</strong><br>
-                ZON-ECN
+                Met vriendelijke groet,<br><br>
+                <strong>ZON-ECN Installatietechniek</strong><br>
+                Hugo Schneider
               </p>
             </td>
           </tr>
@@ -176,8 +177,9 @@ Uw abonnementsgegevens:
 We danken u voor het vertrouwen in ZON-ECN en hopen op een lange en goede samenwerking.
 
 Met vriendelijke groet,
-Hugo
-ZON-ECN
+
+ZON-ECN Installatietechniek
+Hugo Schneider
 
 ${Array.isArray(data.details) && data.details.length > 0 ? `
 Uw keuzes uit het formulier:

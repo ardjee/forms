@@ -95,6 +95,7 @@ const prijzenMap: Record<string, Record<string, number>> = {
 
 
 const voorrijdkostenPrijzen: Record<string, number> = {
+  '0-15km': 0,
   '15-30km': 5.75,
   '31-50km': 9.40
 };
@@ -144,7 +145,7 @@ export function LuchtverwarmerContractForm() {
       onderhoudsfrequentie: undefined,
       typeAbonnement: undefined,
       
-      voorrijdkosten: undefined,
+      voorrijdkosten: "0-15km",
       akkoordVoorwaarden: false,
       iban: "",
     },
@@ -356,6 +357,10 @@ export function LuchtverwarmerContractForm() {
                         <FormLabel>Boven de 15 km is er een reis- en km-toeslag van toepassing:</FormLabel>
                         <FormControl>
                             <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-2">
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl><RadioGroupItem value="0-15km" /></FormControl>
+                                    <FormLabel className="font-normal">0-15 km (geen kosten)</FormLabel>
+                                </FormItem>
                                 <FormItem className="flex items-center space-x-3 space-y-0">
                                     <FormControl><RadioGroupItem value="15-30km" /></FormControl>
                                     <FormLabel className="font-normal">Bij 15-30 km à € 5,75 per maand</FormLabel>
