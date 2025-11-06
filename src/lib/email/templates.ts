@@ -39,9 +39,7 @@ export function generateConfirmationEmailHtml(data: ConfirmationEmailData): stri
               </p>
 
               <p style="margin: 0 0 20px 0; color: #666666; font-size: 16px; line-height: 1.6;">
-                U hoort zo spoedig mogelijk van ons of uw aanvraag akkoord is en in kan gaan per 01-01-2026.
-                Mochten we naar aanleiding van de verstrekte gegevens toch nog vragen hebben, dan nemen we
-                contact op per e-mail of telefoon.
+                Bedankt voor uw interesse in een onderhoudscontract bij ZON-ECN Installatietechniek. We hebben uw aanvraag in goede orde ontvangen. We streven ernaar om deze binnen 7 werkdagen te kunnen bevestigen.
               </p>
 
               <p style="margin: 0 0 10px 0; color: #666666; font-size: 16px; line-height: 1.6;">
@@ -71,7 +69,7 @@ Beste ${data.name},
 
 Bedankt voor uw aanvraag!
 
-U hoort zo spoedig mogelijk van ons of uw aanvraag akkoord is en in kan gaan per 01-01-2026. Mochten we naar aanleiding van de verstrekte gegevens toch nog vragen hebben, dan nemen we contact op per e-mail of telefoon.
+Bedankt voor uw interesse in een onderhoudscontract bij ZON-ECN Installatietechniek. We hebben uw aanvraag in goede orde ontvangen. We streven ernaar om deze binnen 7 werkdagen te kunnen bevestigen.
 
 Met vriendelijke groet,
 
@@ -104,7 +102,11 @@ export function generateAcceptanceEmailHtml(data: AcceptanceEmailData): string {
               <h2 style="margin: 0 0 20px 0; color: #333333; font-size: 20px;">Beste ${data.name},</h2>
 
               <p style="margin: 0 0 20px 0; color: #666666; font-size: 16px; line-height: 1.6;">
-                We hebben uw aanvraag voor <strong>${data.contractType}</strong> bekeken en u bent opgenomen in ons bestand.
+                <strong>Welkom!</strong>
+              </p>
+
+              <p style="margin: 0 0 20px 0; color: #666666; font-size: 16px; line-height: 1.6;">
+                We zijn verheugd u te kunnen mededelen dat uw onderhoudscontract met ingang van 1 januari 2026 actief is. We hebben uw contract opgenomen in ons systeem met onderstaande gegevens. Deze email kunt u beschouwen als een bevestiging van uw nieuwe onderhoudscontract.
               </p>
 
               <div style="margin: 20px 0; padding: 20px; background-color: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
@@ -167,7 +169,9 @@ export function generateAcceptanceEmailText(data: AcceptanceEmailData): string {
   return `
 Beste ${data.name},
 
-We hebben uw aanvraag voor ${data.contractType} bekeken en u bent opgenomen in ons bestand.
+Welkom!
+
+We zijn verheugd u te kunnen mededelen dat uw onderhoudscontract met ingang van 1 januari 2026 actief is. We hebben uw contract opgenomen in ons systeem met onderstaande gegevens. Deze email kunt u beschouwen als een bevestiging van uw nieuwe onderhoudscontract.
 
 Uw abonnementsgegevens:
 • Abonnement: ${data.abonnement}
