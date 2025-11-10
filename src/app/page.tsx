@@ -15,7 +15,7 @@ export default function TarievenPage() {
             Onderhouds­abonnementen
           </h1>
           <p className="max-w-[700px] mx-auto mt-4 text-muted-foreground md:text-xl">
-            Transparante en eerlijke prijzen voor service en onderhoud. Kies het contract dat bij u past.
+            Transparante en eerlijke prijzen voor service en onderhoud. Kies het abonnement dat bij u past.
           </p>
         </div>
       </section>
@@ -179,9 +179,9 @@ export default function TarievenPage() {
       <section className="py-12 md:py-24 lg:py-32 bg-muted">
         <div className="container mx-auto px-4 md:px-6">
            <div className="text-center mb-12">
-             <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Vergelijk onze contracten</h2>
+             <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Vergelijk onze abonnementen</h2>
              <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl mt-4">
-              Bekijk wat is inbegrepen in onze service- en onderhoudscontracten.
+              Bekijk wat is inbegrepen in onze service- en onderhoudsabonnementen.
             </p>
            </div>
           <Card>
@@ -189,7 +189,7 @@ export default function TarievenPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-left">Service</TableHead>
-                  <TableHead className="text-center text-xs sm:text-sm">Onderhouds­contract</TableHead>
+                  <TableHead className="text-center text-xs sm:text-sm">Onderhoudsabonnement</TableHead>
                   <TableHead className="text-center text-xs sm:text-sm">Service Plus</TableHead>
                 </TableRow>
               </TableHeader>
@@ -221,7 +221,7 @@ export default function TarievenPage() {
                 </TableRow>
                  <TableRow>
                   <TableCell className="text-xs sm:text-sm">Prioriteit bij storingen</TableCell>
-                  <TableCell className="text-center"><X className="h-5 w-5 text-destructive mx-auto" /></TableCell>
+                  <TableCell className="p-4 align-middle [&:has([role=checkbox])]:pr-0 text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></TableCell>
                   <TableCell className="text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></TableCell>
                 </TableRow>
                 <TableRow>

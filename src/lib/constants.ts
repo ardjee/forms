@@ -18,7 +18,7 @@ export const SERVICES = [
   },
   {
     title: "Exploitatie & Onderhoud",
-    description: "Na de installatie blijven we betrokken. Wij bieden uitgebreide onderhoudscontracten en monitoring om de prestaties te maximaliseren.",
+    description: "Na de installatie blijven we betrokken. Wij bieden uitgebreide onderhoudsabonnementen en monitoring om de prestaties te maximaliseren.",
   },
 ];
 

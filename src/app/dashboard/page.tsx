@@ -20,6 +20,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import { GenericOverviewTable, type ColumnDef } from '@/components/GenericOverviewTable';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 
 // Contract type labels
 const CONTRACT_TYPE_LABELS: Record<ContractType, string> = {
@@ -50,6 +57,60 @@ interface CustomerGroup {
   contracts: UnifiedContract[];
 }
 
+// Helper function to generate order details from contract
+function generateOrderDetails(contract: UnifiedContract): { label: string; value: string }[] {
+  const contractTypeLabels: Record<string, string> = {
+    'cv-ketel': 'CV-ketel',
+    'warmtepomp-all-electric': 'Warmtepomp All-electric',
+    'warmtepomp-hybride': 'Warmtepomp Hybride',
+    'warmtepomp-grondgebonden': 'Warmtepomp Grondgebonden',
+    'airco': 'Airco',
+    'luchtverwarmer': 'Luchtverwarmer',
+    'gasboiler': 'Gasboiler',
+    'gashaard-kachel': 'Gashaard / Kachel',
+    'geiser': 'Geiser',
+    'mechanische-ventilatiebox': 'Mechanische Ventilatiebox',
+    'warmtepompboiler': 'Warmtepompboiler',
+    'warmte-terugwin-unit': 'Warmte-Terugwin-Unit',
+    'zonneboiler': 'Zonneboiler',
+  };
+
+  const details: { label: string; value: string }[] = [
+    { label: 'Contracttype', value: contractTypeLabels[contract.contractType] || contract.contractType },
+    { label: 'Naam', value: contract.klantNaam },
+    { label: 'E-mail', value: contract.klantEmail },
+    { label: 'Telefoon', value: contract.klantTelefoon },
+    { label: 'Adres', value: contract.klantAdres },
+    { label: 'Postcode', value: contract.klantPostcode },
+    { label: 'Woonplaats', value: contract.klantWoonplaats },
+    contract.adresAfwijkend ? { label: 'Toesteladres', value: contract.toestelAdres || '' } : null,
+    contract.adresAfwijkend ? { label: 'Toestelpostcode', value: contract.toestelPostcode || '' } : null,
+    contract.adresAfwijkend ? { label: 'Toestel woonplaats', value: contract.toestelWoonplaats || '' } : null,
+    contract.merkToestel ? { label: 'Merk toestel', value: contract.merkToestel } : null,
+    contract.typeToestel ? { label: 'Type toestel', value: contract.typeToestel } : null,
+    contract.bouwjaar ? { label: 'Bouwjaar', value: contract.bouwjaar } : null,
+    contract.serienummer ? { label: 'Serienummer', value: contract.serienummer } : null,
+    contract.toestelMerk ? { label: 'Toestel merk', value: contract.toestelMerk } : null,
+    contract.toestelType ? { label: 'Toestel type', value: contract.toestelType } : null,
+    contract.toestelBouwjaar ? { label: 'Toestel bouwjaar', value: contract.toestelBouwjaar } : null,
+    contract.toestelSerienummer ? { label: 'Toestel serienummer', value: contract.toestelSerienummer } : null,
+    contract.aantalBinnenunits !== undefined ? { label: 'Aantal binnenunits', value: String(contract.aantalBinnenunits) } : null,
+    contract.cvVermogen ? { label: 'Vermogen CV', value: contract.cvVermogen } : null,
+    contract.reedsinOnderhoud ? { label: 'Reeds in onderhoud', value: contract.reedsinOnderhoud } : null,
+    { label: 'Onderhoudsfrequentie', value: `${contract.onderhoudsfrequentie} maanden` },
+    { label: 'Type abonnement', value: contract.typeAbonnement },
+    contract.monitoring ? { label: 'Monitoring', value: contract.monitoring } : null,
+    contract.voorrijdkosten ? { label: 'Voorrijdkosten', value: contract.voorrijdkosten } : null,
+    contract.toeslag ? { label: 'Toeslag', value: contract.toeslag } : null,
+    contract.maandelijksePrijs !== undefined ? { label: 'Maandprijs', value: `€${(contract.maandelijksePrijs || 0).toFixed(2)}` } : null,
+    { label: 'Ingangsdatum', value: contract.ingangsdatum },
+    { label: 'Akkoord voorwaarden', value: contract.akkoordVoorwaarden ? 'ja' : 'nee' },
+    { label: 'IBAN', value: contract.iban },
+  ].filter((x): x is { label: string; value: string } => !!x && x.value !== '' && x.value !== 'undefined');
+
+  return details;
+}
+
 function UnifiedDataPageContent() {
   const { contracts, isLoading, error, deleteContractsByIds, updateContractStatus, updateContractField } = useUnifiedContracts();
   const { toast } = useToast();
@@ -61,6 +122,9 @@ function UnifiedDataPageContent() {
   const [filterType, setFilterType] = useState<ContractType | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Order summary modal state
+  const [selectedContract, setSelectedContract] = useState<UnifiedContract | null>(null);
 
   const handleLogout = () => {
     logout();
@@ -71,8 +135,8 @@ function UnifiedDataPageContent() {
     try {
       await updateContractStatus(ids, 'Actief');
       toast({
-        title: "Contract(en) geaccepteerd",
-        description: `${ids.length} contract(en) zijn gemarkeerd als Actief.`
+        title: "Abonnement(en) geaccepteerd",
+        description: `${ids.length} abonnement(en) zijn gemarkeerd als Actief.`
       });
     } catch (error) {
       toast({
@@ -87,8 +151,8 @@ function UnifiedDataPageContent() {
     try {
       await updateContractStatus(ids, 'Geannuleerd');
       toast({
-        title: "Contract(en) geweigerd",
-        description: `${ids.length} contract(en) zijn gemarkeerd als Geannuleerd.`
+        title: "Abonnement(en) geweigerd",
+        description: `${ids.length} abonnement(en) zijn gemarkeerd als Geannuleerd.`
       });
     } catch (error) {
       toast({
@@ -207,7 +271,13 @@ function UnifiedDataPageContent() {
       header: 'Klantnaam',
       sortable: true,
       renderCell: (contract) => (
-        <div className="flex items-center gap-1">
+        <div 
+          className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedContract(contract);
+          }}
+        >
           <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
           <span className="font-medium truncate max-w-[150px] text-sm">{contract.klantNaam}</span>
         </div>
@@ -468,7 +538,7 @@ function UnifiedDataPageContent() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `contracten_overzicht_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.csv`);
+    link.setAttribute("download", `abonnementen_overzicht_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -495,7 +565,7 @@ function UnifiedDataPageContent() {
           <div>
             <h1 className="text-3xl font-bold text-primary font-headline">Dashboard</h1>
             <p className="text-muted-foreground mt-1">
-              Overzicht van {filteredContracts.length} contract{filteredContracts.length !== 1 ? 'en' : ''}
+              Overzicht van {filteredContracts.length} abonnement{filteredContracts.length !== 1 ? 'en' : ''}
             </p>
           </div>
           <Button onClick={handleLogout} variant="outline" size="sm">
@@ -592,9 +662,9 @@ function UnifiedDataPageContent() {
             isLoading={isLoading}
             onDelete={deleteContractsByIds}
             idKey="id"
-            caption="Een overzicht van alle onderhoudscontracten."
+            caption="Een overzicht van alle onderhoudsabonnementen."
             defaultSortKey="createdAt"
-            entityName="contracten"
+            entityName="abonnementen"
             onDownloadCsv={handleDownloadCsv}
             customActions={(selectedIds) => (
               <>
@@ -630,6 +700,49 @@ function UnifiedDataPageContent() {
           />
         )}
       </div>
+      
+      {/* Order Summary Modal */}
+      <Dialog open={!!selectedContract} onOpenChange={(open) => !open && setSelectedContract(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Orderoverzicht - {selectedContract?.klantNaam}</DialogTitle>
+          </DialogHeader>
+          {selectedContract && (
+            <div className="mt-4">
+              <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-500 rounded">
+                <p className="text-sm font-semibold text-gray-800 mb-2">Abonnementsgegevens:</p>
+                <div className="space-y-1 text-sm text-gray-700">
+                  <p>• Abonnement: {selectedContract.typeAbonnement === 'onderhoud' ? 'Onderhoud' : selectedContract.typeAbonnement === 'service-plus' ? 'Service Plus' : selectedContract.typeAbonnement}</p>
+                  <p>• Frequentie: {selectedContract.onderhoudsfrequentie} maanden</p>
+                  {selectedContract.maandelijksePrijs !== undefined && (
+                    <p>• Maandbedrag: €{selectedContract.maandelijksePrijs.toFixed(2)} per maand</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <p className="text-sm font-semibold text-gray-800 mb-3">Uw keuzes uit het formulier:</p>
+                <div className="border rounded-lg overflow-hidden border-gray-200">
+                  <Table>
+                    <TableBody>
+                      {generateOrderDetails(selectedContract).map((item, index) => (
+                        <TableRow key={index} className="border-b border-gray-200 last:border-b-0">
+                          <TableCell className="w-[45%] bg-gray-50 font-medium text-gray-700 border-r border-gray-200 py-3 px-4 text-sm">
+                            {item.label}
+                          </TableCell>
+                          <TableCell className="text-gray-900 py-3 px-4 text-sm">
+                            {item.value}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -671,9 +784,9 @@ function CustomerGroupView({
     try {
       await onDelete(Array.from(selectedIds));
       setSelectedIds(new Set());
-      toast({ title: "Succesvol verwijderd", description: `${selectedIds.size} contract(en) verwijderd.` });
+      toast({ title: "Succesvol verwijderd", description: `${selectedIds.size} abonnement(en) verwijderd.` });
     } catch (error) {
-      toast({ title: "Fout", description: "Kon contracten niet verwijderen.", variant: "destructive" });
+      toast({ title: "Fout", description: "Kon abonnementen niet verwijderen.", variant: "destructive" });
     }
   };
 
@@ -708,7 +821,7 @@ function CustomerGroupView({
       {/* Actions */}
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">
-          {customerGroups.length} klant{customerGroups.length !== 1 ? 'en' : ''} met in totaal {customerGroups.reduce((sum, g) => sum + g.contracts.length, 0)} contract{customerGroups.reduce((sum, g) => sum + g.contracts.length, 0) !== 1 ? 'en' : ''}
+          {customerGroups.length} klant{customerGroups.length !== 1 ? 'en' : ''} met in totaal {customerGroups.reduce((sum, g) => sum + g.contracts.length, 0)} abonnement{customerGroups.reduce((sum, g) => sum + g.contracts.length, 0) !== 1 ? 'en' : ''}
         </p>
         <div className="flex gap-2">
           {selectedIds.size > 0 && (

@@ -26,7 +26,7 @@ export async function sendConfirmationEmail(options: SendConfirmationEmailOption
     const { data, error } = await resend.emails.send({
       from: 'ZON-ECN <onderhoud@zon-ecn.nl>',
       to: [to],
-      subject: 'We hebben uw ZON-ECN onderhoudscontract aanvraag ontvangen!',
+      subject: 'We hebben uw ZON-ECN Onderhoudsabonnement aanvraag ontvangen!',
       html: generateConfirmationEmailHtml(emailData),
       text: generateConfirmationEmailText(emailData),
       replyTo: 'onderhoud@zon-ecn.nl',
