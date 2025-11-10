@@ -1,5 +1,6 @@
 'use client';
 
+// Dashboard for managing service subscriptions
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import { useUnifiedContracts } from '@/context/UnifiedContractsContext';
