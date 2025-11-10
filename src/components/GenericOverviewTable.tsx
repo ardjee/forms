@@ -46,6 +46,8 @@ interface GenericOverviewTableProps<T extends { id: string }> {
   entityName?: string;
   onDownloadCsv?: () => void;
   customActions?: (selectedIds: string[]) => ReactNode;
+  // Optional: vertical offset for sticky elements under a page-level sticky header
+  stickyTopOffset?: number;
 }
 
 export function GenericOverviewTable<T extends { id: string }>({
@@ -59,6 +61,7 @@ export function GenericOverviewTable<T extends { id: string }>({
   entityName = 'items',
   onDownloadCsv,
   customActions,
+  stickyTopOffset = 0,
 }: GenericOverviewTableProps<T>) {
   const [selection, setSelection] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState('');
@@ -78,6 +81,18 @@ export function GenericOverviewTable<T extends { id: string }>({
   const [isInView, setIsInView] = useState<boolean>(false);
   // Guard to prevent scroll feedback loops
   const isSyncingRef = useRef<boolean>(false);
+  // Measure toolbar height to offset sticky table header correctly
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [toolbarHeight, setToolbarHeight] = useState<number>(0);
+
+  useEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setToolbarHeight(el.offsetHeight));
+    ro.observe(el);
+    setToolbarHeight(el.offsetHeight);
+    return () => ro.disconnect();
+  }, []);
   
   const selectedIds = useMemo(() => Object.keys(selection).filter(id => selection[id]), [selection]);
 
@@ -246,6 +261,40 @@ export function GenericOverviewTable<T extends { id: string }>({
         </div>
       </div>
       <div className="rounded-md border">
+        {/* Sticky toolbar below page freeze header */}
+        <div
+          ref={toolbarRef}
+          className="flex justify-between items-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky z-30 border-b"
+          style={{ top: stickyTopOffset }}
+        >
+          <Input
+            placeholder={`Filter ${entityName}...`}
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            className="max-w-sm"
+          />
+          <div className="flex items-center gap-2">
+            {onDownloadCsv && (
+              <Button variant="outline" size="sm" onClick={onDownloadCsv}>
+                <Download className="mr-2 h-4 w-4" />
+                Download CSV
+              </Button>
+            )}
+            {customActions && selectedIds.length > 0 && customActions(selectedIds)}
+            {selectedIds.length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isDeleting}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete ({selectedIds.length})
+              </Button>
+            )}
+          </div>
+        </div>
+
         <div 
           ref={scrollContainerRef}
           className="relative w-full overflow-x-auto overflow-y-visible [&::-webkit-scrollbar]:hidden"
@@ -256,10 +305,10 @@ export function GenericOverviewTable<T extends { id: string }>({
         >
           <Table style={{ minWidth: '100%', width: 'max-content' }}>
             <TableCaption>{caption}</TableCaption>
-            {/* Offset under the sticky filters/header area */}
-            <TableHeader className="sticky top-28 z-30 bg-white shadow-sm">
+            {/* Sticky table header under (page header + filters + toolbar) */}
+            <TableHeader className="sticky z-30 bg-white shadow-sm" style={{ top: stickyTopOffset + toolbarHeight }}>
               <TableRow>
-                <TableHead className="w-[50px] sticky top-28 z-30 bg-white">
+                <TableHead className="w-[50px] sticky z-30 bg-white" style={{ top: stickyTopOffset + toolbarHeight }}>
                   <Checkbox
                     checked={selectedIds.length > 0 && selectedIds.length === filteredData.length}
                     onCheckedChange={handleSelectAll}
@@ -267,7 +316,7 @@ export function GenericOverviewTable<T extends { id: string }>({
                   />
                 </TableHead>
               {columns.map(col => (
-                <TableHead key={col.key} className="sticky top-28 z-30 bg-white">
+                <TableHead key={col.key} className="sticky z-30 bg-white" style={{ top: stickyTopOffset + toolbarHeight }}>
                   {col.sortable ? (
                     <Button variant="ghost" onClick={() => requestSort(col.key)}>
                       {col.header}

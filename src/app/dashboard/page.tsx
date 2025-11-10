@@ -19,7 +19,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { GenericOverviewTable, type ColumnDef } from '@/components/GenericOverviewTable';
 import {
   Dialog,
@@ -558,11 +558,23 @@ function UnifiedDataPageContent() {
     );
   }
 
+  // Measure height of the freeze pane (header + filters) for sticky offsets below
+  const freezeRef = useRef<HTMLDivElement>(null);
+  const [freezeHeight, setFreezeHeight] = useState(0);
+  useEffect(() => {
+    const el = freezeRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setFreezeHeight(el.offsetHeight));
+    ro.observe(el);
+    setFreezeHeight(el.offsetHeight);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <>
       <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16 py-4 md:py-8">
         {/* Freeze pane: header + filters always visible */}
-        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div ref={freezeRef} className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
           {/* Header */}
           <header className="py-3 flex justify-between items-center">
             <div>
@@ -670,6 +682,7 @@ function UnifiedDataPageContent() {
             defaultSortKey="createdAt"
             entityName="abonnementen"
             onDownloadCsv={handleDownloadCsv}
+            stickyTopOffset={freezeHeight}
             customActions={(selectedIds) => (
               <>
                 <Button
