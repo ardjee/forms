@@ -94,8 +94,8 @@ export function GenericOverviewTable<T extends { id: string }>({
       // Update proxy dimensions and position
       proxyInner.style.width = `${scrollContainer.scrollWidth}px`;
       setStickyScrollbarPosition({ left: rect.left, width: rect.width });
-      // Only show when horizontally overflowing and in view
-      setShowStickyScrollbar(overflowing && isInView);
+      // Show when horizontally overflowing (always visible while on this page)
+      setShowStickyScrollbar(overflowing);
       // Keep initial sync aligned
       if (proxy.scrollLeft !== scrollContainer.scrollLeft) {
         proxy.scrollLeft = scrollContainer.scrollLeft;
@@ -256,9 +256,10 @@ export function GenericOverviewTable<T extends { id: string }>({
         >
           <Table style={{ minWidth: '100%', width: 'max-content' }}>
             <TableCaption>{caption}</TableCaption>
-            <TableHeader className="sticky top-0 z-30 bg-white shadow-sm">
+            {/* Offset under the sticky filters/header area */}
+            <TableHeader className="sticky top-28 z-30 bg-white shadow-sm">
               <TableRow>
-                <TableHead className="w-[50px]">
+                <TableHead className="w-[50px] sticky top-28 z-30 bg-white">
                   <Checkbox
                     checked={selectedIds.length > 0 && selectedIds.length === filteredData.length}
                     onCheckedChange={handleSelectAll}
@@ -266,7 +267,7 @@ export function GenericOverviewTable<T extends { id: string }>({
                   />
                 </TableHead>
               {columns.map(col => (
-                <TableHead key={col.key}>
+                <TableHead key={col.key} className="sticky top-28 z-30 bg-white">
                   {col.sortable ? (
                     <Button variant="ghost" onClick={() => requestSort(col.key)}>
                       {col.header}

@@ -561,99 +561,102 @@ function UnifiedDataPageContent() {
   return (
     <>
       <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16 py-4 md:py-8">
-        {/* Header */}
-        <header className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-primary font-headline">Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              Overzicht van {filteredContracts.length} abonnement{filteredContracts.length !== 1 ? 'en' : ''}
-            </p>
-          </div>
-          <Button onClick={handleLogout} variant="outline" size="sm">
-            <LogOut className="h-4 w-4 mr-2" />
-            Uitloggen
-          </Button>
-        </header>
-
-        {/* Filters and View Mode */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filters & Weergave
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* View Mode Toggle */}
+        {/* Freeze pane: header + filters always visible */}
+        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+          {/* Header */}
+          <header className="py-3 flex justify-between items-center">
             <div>
-              <Label className="text-sm font-medium mb-2 block">Weergave</Label>
-              <RadioGroup value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)} className="flex gap-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="list" id="list" />
-                  <Label htmlFor="list" className="flex items-center gap-2 cursor-pointer">
-                    <List className="h-4 w-4" />
-                    Lijst weergave
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="customer" id="customer" />
-                  <Label htmlFor="customer" className="flex items-center gap-2 cursor-pointer">
-                    <Users className="h-4 w-4" />
-                    Klant weergave
-                  </Label>
-                </div>
-              </RadioGroup>
+              <h1 className="text-3xl font-bold text-primary font-headline">Dashboard</h1>
+              <p className="text-muted-foreground mt-1">
+                Overzicht van {filteredContracts.length} abonnement{filteredContracts.length !== 1 ? 'en' : ''}
+              </p>
             </div>
+            <Button onClick={handleLogout} variant="outline" size="sm">
+              <LogOut className="h-4 w-4 mr-2" />
+              Uitloggen
+            </Button>
+          </header>
 
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Filters and View Mode */}
+          <Card className="mb-4 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filters & Weergave
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* View Mode Toggle */}
               <div>
-                <Label htmlFor="type-filter" className="text-sm font-medium mb-2 block">Type</Label>
-                <Select value={filterType} onValueChange={(value) => setFilterType(value as ContractType | 'all')}>
-                  <SelectTrigger id="type-filter">
-                    <SelectValue placeholder="Alle types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle types</SelectItem>
-                    {Object.entries(CONTRACT_TYPE_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-sm font-medium mb-2 block">Weergave</Label>
+                <RadioGroup value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)} className="flex gap-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="list" id="list" />
+                    <Label htmlFor="list" className="flex items-center gap-2 cursor-pointer">
+                      <List className="h-4 w-4" />
+                      Lijst weergave
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="customer" id="customer" />
+                    <Label htmlFor="customer" className="flex items-center gap-2 cursor-pointer">
+                      <Users className="h-4 w-4" />
+                      Klant weergave
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
 
-              <div>
-                <Label htmlFor="status-filter" className="text-sm font-medium mb-2 block">Status</Label>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger id="status-filter">
-                    <SelectValue placeholder="Alle statussen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle statussen</SelectItem>
-                    <SelectItem value="Nieuw">Nieuw</SelectItem>
-                    <SelectItem value="In behandeling">In behandeling</SelectItem>
-                    <SelectItem value="Actief">Actief</SelectItem>
-                    <SelectItem value="Geannuleerd">Geannuleerd</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="type-filter" className="text-sm font-medium mb-2 block">Type</Label>
+                  <Select value={filterType} onValueChange={(value) => setFilterType(value as ContractType | 'all')}>
+                    <SelectTrigger id="type-filter">
+                      <SelectValue placeholder="Alle types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alle types</SelectItem>
+                      {Object.entries(CONTRACT_TYPE_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div>
-                <Label htmlFor="search" className="text-sm font-medium mb-2 block">Zoeken</Label>
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="search"
-                    placeholder="Naam, email of telefoon..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8"
-                  />
+                <div>
+                  <Label htmlFor="status-filter" className="text-sm font-medium mb-2 block">Status</Label>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger id="status-filter">
+                      <SelectValue placeholder="Alle statussen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alle statussen</SelectItem>
+                      <SelectItem value="Nieuw">Nieuw</SelectItem>
+                      <SelectItem value="In behandeling">In behandeling</SelectItem>
+                      <SelectItem value="Actief">Actief</SelectItem>
+                      <SelectItem value="Geannuleerd">Geannuleerd</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="search" className="text-sm font-medium mb-2 block">Zoeken</Label>
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="search"
+                      placeholder="Naam, email of telefoon..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Content based on view mode */}
         {viewMode === 'list' ? (
