@@ -232,34 +232,6 @@ export function GenericOverviewTable<T extends { id: string }>({
 
   return (
     <div className="space-y-4" ref={tableContainerRef} style={{ paddingBottom: showStickyScrollbar ? 16 : 0 }}>
-      <div className="flex justify-between items-center">
-        <Input
-          placeholder={`Filter ${entityName}...`}
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-          className="max-w-sm"
-        />
-        <div className="flex items-center gap-2">
-            {onDownloadCsv && (
-              <Button variant="outline" size="sm" onClick={onDownloadCsv}>
-                <Download className="mr-2 h-4 w-4" />
-                Download CSV
-              </Button>
-            )}
-            {customActions && selectedIds.length > 0 && customActions(selectedIds)}
-            {selectedIds.length > 0 && (
-                <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    disabled={isDeleting}
-                >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete ({selectedIds.length})
-                </Button>
-            )}
-        </div>
-      </div>
       <div className="rounded-md border">
         {/* Sticky toolbar below page freeze header */}
         <div
