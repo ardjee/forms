@@ -229,7 +229,7 @@ export function GenericOverviewTable<T extends { id: string }>({
             msOverflowStyle: 'none'
           }}
         >
-          <Table style={{ minWidth: '100%', width: 'max-content' }}>
+          <Table className="border-separate" style={{ minWidth: '100%', width: 'max-content' }}>
             <TableCaption>{caption}</TableCaption>
             {/* Sticky table header under freeze pane */}
             <TableHeader className="sticky z-30 bg-white shadow-sm" style={{ top: stickyTopOffset }}>

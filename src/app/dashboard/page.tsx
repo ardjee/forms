@@ -672,6 +672,14 @@ function UnifiedDataPageContent() {
 
         {/* Content based on view mode */}
         {viewMode === 'list' ? (
+          <div className="sticky z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" style={{ top: freezeHeight }}>
+            <div className="flex justify-end items-center py-2">
+              <Button onClick={handleDownloadCsv} variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Download CSV
+              </Button>
+            </div>
+          </div>
           <GenericOverviewTable
             data={filteredContracts}
             columns={columns}
@@ -681,7 +689,6 @@ function UnifiedDataPageContent() {
             caption="Een overzicht van alle onderhoudsabonnementen."
             defaultSortKey="createdAt"
             entityName="abonnementen"
-            onDownloadCsv={handleDownloadCsv}
             stickyTopOffset={freezeHeight}
             customActions={(selectedIds) => (
               <>
