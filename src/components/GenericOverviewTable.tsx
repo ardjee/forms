@@ -72,84 +72,87 @@ export function GenericOverviewTable<T extends { id: string }>({
   const stickyScrollbarContentRef = useRef<HTMLDivElement>(null);
   const [showStickyScrollbar, setShowStickyScrollbar] = useState(false);
   const [stickyScrollbarPosition, setStickyScrollbarPosition] = useState({ left: 0, width: 0 });
+  // New: explicit ref to the actual horizontal scroll container (table wrapper)
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // New: track visibility in viewport to avoid showing bar when table is off-screen
+  const [isInView, setIsInView] = useState<boolean>(false);
+  // Guard to prevent scroll feedback loops
+  const isSyncingRef = useRef<boolean>(false);
   
   const selectedIds = useMemo(() => Object.keys(selection).filter(id => selection[id]), [selection]);
 
   // Sync scrollbar with table
   useEffect(() => {
-    const tableContainer = tableContainerRef.current;
-    const stickyScrollbar = stickyScrollbarRef.current;
-    const stickyScrollbarContent = stickyScrollbarContentRef.current;
+    const scrollContainer = scrollContainerRef.current;
+    const proxy = stickyScrollbarRef.current;
+    const proxyInner = stickyScrollbarContentRef.current;
+    if (!scrollContainer || !proxy || !proxyInner) return;
 
-    if (!tableContainer || !stickyScrollbar || !stickyScrollbarContent) return;
-
-    // Update sticky scrollbar width and position to match table
-    const updateScrollbar = () => {
-      const tableWrapper = tableContainer.querySelector('.relative.w-full') as HTMLElement;
-      if (tableWrapper) {
-        const table = tableWrapper.querySelector('table') as HTMLElement;
-        if (table) {
-          const tableRect = tableWrapper.getBoundingClientRect();
-          const isOverflowing = table.scrollWidth > tableWrapper.clientWidth;
-          
-          // Always show sticky scrollbar if table overflows horizontally
-          setShowStickyScrollbar(isOverflowing);
-          
-          // Update scrollbar dimensions and position
-          stickyScrollbarContent.style.width = `${table.scrollWidth}px`;
-          setStickyScrollbarPosition({
-            left: tableRect.left,
-            width: tableWrapper.clientWidth
-          });
-        }
+    const computeAndUpdate = () => {
+      const rect = scrollContainer.getBoundingClientRect();
+      const overflowing = scrollContainer.scrollWidth > scrollContainer.clientWidth;
+      // Update proxy dimensions and position
+      proxyInner.style.width = `${scrollContainer.scrollWidth}px`;
+      setStickyScrollbarPosition({ left: rect.left, width: rect.width });
+      // Only show when horizontally overflowing and in view
+      setShowStickyScrollbar(overflowing && isInView);
+      // Keep initial sync aligned
+      if (proxy.scrollLeft !== scrollContainer.scrollLeft) {
+        proxy.scrollLeft = scrollContainer.scrollLeft;
       }
     };
 
-    // Sync scroll from table to sticky scrollbar
-    const handleTableScroll = (e: Event) => {
-      if (stickyScrollbar) {
-        stickyScrollbar.scrollLeft = (e.target as HTMLElement).scrollLeft;
-      }
+    const handleContainerScroll = () => {
+      if (isSyncingRef.current) return;
+      isSyncingRef.current = true;
+      proxy.scrollLeft = scrollContainer.scrollLeft;
+      isSyncingRef.current = false;
     };
 
-    // Sync scroll from sticky scrollbar to table
-    const handleStickyScroll = (e: Event) => {
-      const tableWrapper = tableContainer.querySelector('.relative.w-full') as HTMLElement;
-      if (tableWrapper) {
-        tableWrapper.scrollLeft = (e.target as HTMLElement).scrollLeft;
-      }
+    const handleProxyScroll = () => {
+      if (isSyncingRef.current) return;
+      isSyncingRef.current = true;
+      scrollContainer.scrollLeft = proxy.scrollLeft;
+      isSyncingRef.current = false;
     };
 
-    // Check visibility on scroll
-    const handleWindowScroll = () => {
-      updateScrollbar();
+    // Observe visibility of the scroll container in viewport
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        setIsInView(entry.isIntersecting);
+        // Recompute when visibility changes
+        computeAndUpdate();
+      },
+      { root: null, threshold: 0 }
+    );
+    intersectionObserver.observe(scrollContainer);
+
+    // Keep measurements up to date
+    const resizeObserver = new ResizeObserver(computeAndUpdate);
+    resizeObserver.observe(scrollContainer);
+
+    // Window events
+    const handleWindowScrollOrResize = () => computeAndUpdate();
+    window.addEventListener('scroll', handleWindowScrollOrResize);
+    window.addEventListener('resize', handleWindowScrollOrResize);
+
+    // Attach scroll listeners
+    scrollContainer.addEventListener('scroll', handleContainerScroll);
+    proxy.addEventListener('scroll', handleProxyScroll);
+
+    // Initial measurement
+    computeAndUpdate();
+
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleContainerScroll);
+      proxy.removeEventListener('scroll', handleProxyScroll);
+      window.removeEventListener('scroll', handleWindowScrollOrResize);
+      window.removeEventListener('resize', handleWindowScrollOrResize);
+      resizeObserver.disconnect();
+      intersectionObserver.disconnect();
     };
-
-    const tableWrapper = tableContainer.querySelector('.relative.w-full') as HTMLElement;
-    if (tableWrapper) {
-      tableWrapper.addEventListener('scroll', handleTableScroll);
-      stickyScrollbar.addEventListener('scroll', handleStickyScroll);
-      window.addEventListener('scroll', handleWindowScroll);
-      
-      // Initial update
-      updateScrollbar();
-      
-      // Update on window resize
-      window.addEventListener('resize', updateScrollbar);
-      
-      // Update when data changes
-      const resizeObserver = new ResizeObserver(updateScrollbar);
-      resizeObserver.observe(tableWrapper);
-
-      return () => {
-        tableWrapper.removeEventListener('scroll', handleTableScroll);
-        stickyScrollbar.removeEventListener('scroll', handleStickyScroll);
-        window.removeEventListener('scroll', handleWindowScroll);
-        window.removeEventListener('resize', updateScrollbar);
-        resizeObserver.disconnect();
-      };
-    }
-  }, [data]);
+  }, [data, isInView]);
 
   const handleSelectAll = (checked: boolean) => {
     const newSelection: Record<string, boolean> = {};
@@ -213,7 +216,7 @@ export function GenericOverviewTable<T extends { id: string }>({
   );
 
   return (
-    <div className="space-y-4" ref={tableContainerRef}>
+    <div className="space-y-4" ref={tableContainerRef} style={{ paddingBottom: showStickyScrollbar ? 16 : 0 }}>
       <div className="flex justify-between items-center">
         <Input
           placeholder={`Filter ${entityName}...`}
@@ -244,6 +247,7 @@ export function GenericOverviewTable<T extends { id: string }>({
       </div>
       <div className="rounded-md border">
         <div 
+          ref={scrollContainerRef}
           className="relative w-full overflow-x-auto overflow-y-visible [&::-webkit-scrollbar]:hidden"
           style={{ 
             scrollbarWidth: 'none',
