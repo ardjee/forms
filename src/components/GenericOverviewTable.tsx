@@ -256,7 +256,7 @@ export function GenericOverviewTable<T extends { id: string }>({
         >
           <Table style={{ minWidth: '100%', width: 'max-content' }}>
             <TableCaption>{caption}</TableCaption>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-30 bg-white shadow-sm">
               <TableRow>
                 <TableHead className="w-[50px]">
                   <Checkbox
