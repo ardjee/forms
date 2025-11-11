@@ -416,7 +416,7 @@ export function CvContractForm() {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="onderhoud">Onderhoud</SelectItem>
-                      <SelectItem value="service-plus">Service Plus</SelectItem>
+                      <SelectItem value="service-plus">Service Plus (alleen voor cv-ketels tot 15 jaar oud)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
