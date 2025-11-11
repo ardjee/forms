@@ -201,7 +201,7 @@ export default function TarievenPage() {
                 </TableRow>
                 <TableRow>
                   <TableCell className="text-xs sm:text-sm">24/7 storingsdienst</TableCell>
-                  <TableCell className="p-4 align-middle [&:has([role=checkbox])]:pr-0 text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></TableCell>
+                  <TableCell className="text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></TableCell>
                   <TableCell className="text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></TableCell>
                 </TableRow>
                 <TableRow>
