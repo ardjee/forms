@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { recalculatePrice } from '@/utils/priceCalculation';
 import { GenericOverviewTable, type ColumnDef } from '@/components/GenericOverviewTable';
 import {
   Dialog,
@@ -113,10 +114,18 @@ function generateOrderDetails(contract: UnifiedContract): { label: string; value
 }
 
 function UnifiedDataPageContent() {
-  const { contracts, isLoading, error, deleteContractsByIds, updateContractStatus, updateContractField } = useUnifiedContracts();
+  const { contracts, isLoading, error, deleteContractsByIds, updateContractStatus, updateContractField, refreshContracts } = useUnifiedContracts();
   const { toast } = useToast();
   const { logout } = useAuth();
   const router = useRouter();
+  
+  // Debug: Log when contracts change
+  useEffect(() => {
+    console.log('📊 Dashboard - contracts updated from context:', {
+      count: contracts.length,
+      firstPrices: contracts.slice(0, 5).map(c => ({ id: c.id, price: c.maandelijksePrijs, name: c.klantNaam }))
+    });
+  }, [contracts]);
 
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -124,8 +133,15 @@ function UnifiedDataPageContent() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Sort state
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'createdAt', direction: 'desc' });
+  
   // Order summary modal state
   const [selectedContract, setSelectedContract] = useState<UnifiedContract | null>(null);
+  
+  const handleSortChange = (key: string, direction: 'asc' | 'desc') => {
+    setSortConfig({ key, direction });
+  };
 
   const handleLogout = () => {
     logout();
@@ -166,7 +182,13 @@ function UnifiedDataPageContent() {
 
   // Filter and search contracts
   const filteredContracts = useMemo(() => {
-    return contracts.filter(contract => {
+    console.log('Dashboard - Filtering contracts:', {
+      totalContracts: contracts.length,
+      filterType,
+      filterStatus,
+      searchTerm,
+    });
+    const filtered = contracts.filter(contract => {
       // Type filter
       if (filterType !== 'all' && contract.contractType !== filterType) {
         return false;
@@ -189,6 +211,15 @@ function UnifiedDataPageContent() {
 
       return true;
     });
+    console.log('Dashboard - Filtered contracts result:', {
+      filteredCount: filtered.length,
+      firstFew: filtered.slice(0, 3).map(c => ({ 
+        id: c.id, 
+        klantNaam: c.klantNaam,
+        price: c.maandelijksePrijs 
+      }))
+    });
+    return filtered;
   }, [contracts, filterType, filterStatus, searchTerm]);
 
   // Group contracts by customer
@@ -365,12 +396,39 @@ function UnifiedDataPageContent() {
           value={String(contract.onderhoudsfrequentie)}
           onValueChange={async (value) => {
             try {
+              const newFreq = parseInt(value);
+              
+              // Recalculate price using the centralized price calculation
+              const newPrice = recalculatePrice(contract, newFreq);
+              
+              if (newPrice === null) {
+                toast({
+                  title: "Waarschuwing",
+                  description: "Kon nieuwe prijs niet berekenen. Alleen frequentie wordt bijgewerkt.",
+                  variant: "destructive"
+                });
+                await updateContractField(contract.id, 'onderhoudsfrequentie', value);
+                return;
+              }
+              
+              console.log('💰 Prijs herberekening:', {
+                contractType: contract.contractType,
+                oldFreq: contract.onderhoudsfrequentie,
+                newFreq,
+                oldPrice: contract.maandelijksePrijs,
+                newPrice
+              });
+              
+              // Update both frequency and price
               await updateContractField(contract.id, 'onderhoudsfrequentie', value);
+              await updateContractField(contract.id, 'maandelijksePrijs', newPrice);
+              
               toast({
-                title: "Frequentie bijgewerkt",
-                description: `Onderhoudsfrequentie aangepast naar ${value} maanden.`
+                title: "Bijgewerkt",
+                description: `Frequentie: ${value} mnd → Prijs: €${newPrice.toFixed(2)}/mnd`
               });
             } catch (error) {
+              console.error('Error updating frequency:', error);
               toast({
                 title: "Fout",
                 description: "Kon frequentie niet bijwerken.",
@@ -395,23 +453,76 @@ function UnifiedDataPageContent() {
       header: 'Monitor',
       sortable: true,
       renderCell: (contract) => (
-        <div className="flex items-center gap-1">
-          <Eye className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-          <span className="text-xs">
-            {contract.monitoring === 'ja' ? 'Ja' : contract.monitoring === 'nee' ? 'Nee' : '-'}
-          </span>
-        </div>
+        <Select
+          value={contract.monitoring || 'nee'}
+          onValueChange={async (value: 'ja' | 'nee') => {
+            try {
+              const oldMonitoring = contract.monitoring;
+              
+              // Recalculate price with new monitoring setting
+              const contractWithNewMonitoring = { ...contract, monitoring: value };
+              const newPrice = recalculatePrice(contractWithNewMonitoring, contract.onderhoudsfrequentie);
+              
+              if (newPrice === null) {
+                toast({
+                  title: "Waarschuwing",
+                  description: "Kon nieuwe prijs niet berekenen. Alleen monitoring wordt bijgewerkt.",
+                  variant: "destructive"
+                });
+                await updateContractField(contract.id, 'monitoring', value);
+                return;
+              }
+              
+              console.log('📡 Monitoring wijziging:', {
+                contractType: contract.contractType,
+                oldMonitoring,
+                newMonitoring: value,
+                oldPrice: contract.maandelijksePrijs,
+                newPrice,
+                priceDiff: (newPrice - (contract.maandelijksePrijs || 0)).toFixed(2)
+              });
+              
+              // Update both monitoring and price
+              await updateContractField(contract.id, 'monitoring', value);
+              await updateContractField(contract.id, 'maandelijksePrijs', newPrice);
+              
+              toast({
+                title: "Bijgewerkt",
+                description: `Monitoring: ${value === 'ja' ? 'Ja' : 'Nee'} → Prijs: €${newPrice.toFixed(2)}/mnd`
+              });
+            } catch (error) {
+              console.error('Error updating monitoring:', error);
+              toast({
+                title: "Fout",
+                description: "Kon monitoring niet bijwerken.",
+                variant: "destructive"
+              });
+            }
+          }}
+        >
+          <SelectTrigger className="w-[70px] h-7 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ja">Ja</SelectItem>
+            <SelectItem value="nee">Nee</SelectItem>
+          </SelectContent>
+        </Select>
       ),
     },
     {
       key: 'maandelijksePrijs',
       header: 'Prijs/mnd',
       sortable: true,
-      renderCell: (contract) => (
-        <span className="font-semibold text-green-600 text-sm">
-          {contract.maandelijksePrijs ? `€${contract.maandelijksePrijs.toFixed(2)}` : '-'}
-        </span>
-      ),
+      renderCell: (contract) => {
+        const price = contract.maandelijksePrijs;
+        console.log(`Rendering price for contract ${contract.id}:`, price);
+        return (
+          <span className="font-semibold text-green-600 text-sm">
+            {price ? `€${price.toFixed(2)}` : '-'}
+          </span>
+        );
+      },
     },
     {
       key: 'status',
@@ -666,21 +777,52 @@ function UnifiedDataPageContent() {
                   </div>
                 </div>
               </div>
+
+              {/* Table Header Row - Only show in list view */}
+              {viewMode === 'list' && (
+                <div className="pt-4 border-t">
+                  <div className="overflow-x-auto -mx-6 px-6">
+                    <div className="inline-flex min-w-full gap-2 text-xs font-medium text-muted-foreground h-12 items-center">
+                      <div className="w-[50px] flex-shrink-0 px-4"></div>
+                      {columns.map((col) => (
+                        <div 
+                          key={col.key} 
+                          className={`px-4 flex-shrink-0 whitespace-nowrap h-12 flex items-center ${
+                            col.sortable ? 'cursor-pointer hover:text-foreground transition-colors' : ''
+                          }`}
+                          onClick={() => col.sortable && handleSortChange(col.key, sortConfig.key === col.key && sortConfig.direction === 'asc' ? 'desc' : 'asc')}
+                        >
+                          <div className="flex items-center gap-1">
+                            {col.header}
+                            {col.sortable && (
+                              <span className="text-xs">
+                                {sortConfig.key === col.key ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '⇅'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         {/* Content based on view mode */}
         {viewMode === 'list' ? (
-          <div className="sticky z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" style={{ top: freezeHeight }}>
-            <div className="flex justify-end items-center py-2">
-              <Button onClick={handleDownloadCsv} variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Download CSV
-              </Button>
+          <>
+            <div className="sticky z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" style={{ top: freezeHeight }}>
+              <div className="flex justify-end items-center py-2">
+                <Button onClick={handleDownloadCsv} variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download CSV
+                </Button>
+              </div>
             </div>
-          </div>
-          <GenericOverviewTable
+            <GenericOverviewTable
+            key={`table-${filteredContracts.length}-${filteredContracts.map(c => c.id).join(',').substring(0, 100)}`}
             data={filteredContracts}
             columns={columns}
             isLoading={isLoading}
@@ -690,6 +832,8 @@ function UnifiedDataPageContent() {
             defaultSortKey="createdAt"
             entityName="abonnementen"
             stickyTopOffset={freezeHeight}
+            externalSortConfig={sortConfig}
+            onSortChange={handleSortChange}
             customActions={(selectedIds) => (
               <>
                 <Button
@@ -713,6 +857,7 @@ function UnifiedDataPageContent() {
               </>
             )}
           />
+          </>
         ) : (
           <CustomerGroupView
             customerGroups={customerGroups}

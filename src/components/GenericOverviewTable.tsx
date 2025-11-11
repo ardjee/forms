@@ -48,6 +48,9 @@ interface GenericOverviewTableProps<T extends { id: string }> {
   customActions?: (selectedIds: string[]) => ReactNode;
   // Optional: vertical offset for sticky elements under a page-level sticky header
   stickyTopOffset?: number;
+  // Optional: expose sort state and handler for external use
+  onSortChange?: (sortKey: string, direction: 'asc' | 'desc') => void;
+  externalSortConfig?: { key: string; direction: 'asc' | 'desc' };
 }
 
 export function GenericOverviewTable<T extends { id: string }>({
@@ -62,10 +65,18 @@ export function GenericOverviewTable<T extends { id: string }>({
   onDownloadCsv,
   customActions,
   stickyTopOffset = 0,
+  onSortChange,
+  externalSortConfig,
 }: GenericOverviewTableProps<T>) {
   const [selection, setSelection] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: defaultSortKey, direction: 'desc' });
+  const [internalSortConfig, setInternalSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: defaultSortKey, direction: 'desc' });
+  
+  // Use useMemo to ensure sortConfig updates trigger re-renders
+  const sortConfig = useMemo(() => {
+    return externalSortConfig || internalSortConfig;
+  }, [externalSortConfig, internalSortConfig]);
+  
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
@@ -83,6 +94,66 @@ export function GenericOverviewTable<T extends { id: string }>({
   const isSyncingRef = useRef<boolean>(false);
   
   const selectedIds = useMemo(() => Object.keys(selection).filter(id => selection[id]), [selection]);
+
+  const filteredData = useMemo(() => {
+    if (!data || !Array.isArray(data)) {
+      console.warn('GenericOverviewTable: data is not an array', data);
+      return [];
+    }
+    console.log('GenericOverviewTable - filtering data:', {
+      dataLength: data.length,
+      filterValue: filter,
+      firstItemPrice: data[0]?.maandelijksePrijs || 'N/A'
+    });
+    const filtered = data.filter(item =>
+      Object.values(item).some(value =>
+        String(value).toLowerCase().includes(filter.toLowerCase())
+      )
+    );
+    console.log('GenericOverviewTable - filtered result:', {
+      filteredLength: filtered.length,
+      firstItemPrice: filtered[0]?.maandelijksePrijs || 'N/A'
+    });
+    return filtered;
+  }, [data, filter]);
+
+  const sortedData = useMemo(() => {
+    if (!filteredData || filteredData.length === 0) {
+      return [];
+    }
+    const sortableData = [...filteredData];
+    sortableData.sort((a, b) => {
+      const aValue = (a as any)[sortConfig.key];
+      const bValue = (b as any)[sortConfig.key];
+
+      if (aValue === null || aValue === undefined) return 1;
+      if (bValue === null || bValue === undefined) return -1;
+      
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+    console.log('GenericOverviewTable - sorted result:', {
+      sortedLength: sortableData.length,
+      sortKey: sortConfig.key,
+      sortDirection: sortConfig.direction,
+      firstItemPrice: sortableData[0]?.maandelijksePrijs || 'N/A'
+    });
+    return sortableData;
+  }, [filteredData, sortConfig]);
+
+  // Debug: Log data changes
+  useEffect(() => {
+    console.log('GenericOverviewTable - data received:', {
+      dataLength: data?.length || 0,
+      isLoading,
+      filteredDataLength: filteredData?.length || 0,
+      sortedDataLength: sortedData?.length || 0,
+      firstItemPrice: data?.[0]?.maandelijksePrijs || 'N/A',
+      firstItemName: data?.[0]?.klantNaam || 'N/A',
+      allPrices: data?.slice(0, 5).map(d => d.maandelijksePrijs) || []
+    });
+  }, [data, isLoading, filteredData, sortedData]);
 
   // Sync scrollbar with table
   useEffect(() => {
@@ -174,32 +245,18 @@ export function GenericOverviewTable<T extends { id: string }>({
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
-    setSortConfig({ key, direction });
+    const newSortConfig = { key, direction };
+    
+    // Update internal state if not using external config
+    if (!externalSortConfig) {
+      setInternalSortConfig(newSortConfig);
+    }
+    
+    // Notify parent component
+    if (onSortChange) {
+      onSortChange(key, direction);
+    }
   };
-  
-  const filteredData = useMemo(() => {
-    return data.filter(item =>
-      Object.values(item).some(value =>
-        String(value).toLowerCase().includes(filter.toLowerCase())
-      )
-    );
-  }, [data, filter]);
-
-  const sortedData = useMemo(() => {
-    const sortableData = [...filteredData];
-    sortableData.sort((a, b) => {
-      const aValue = (a as any)[sortConfig.key];
-      const bValue = (b as any)[sortConfig.key];
-
-      if (aValue === null || aValue === undefined) return 1;
-      if (bValue === null || bValue === undefined) return -1;
-      
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-    return sortableData;
-  }, [filteredData, sortConfig]);
 
   const handleDelete = async () => {
     setShowDeleteConfirm(false);
@@ -211,10 +268,10 @@ export function GenericOverviewTable<T extends { id: string }>({
 
   const renderLoadingState = () => (
      Array.from({ length: 5 }).map((_, i) => (
-        <TableRow key={`loading-${i}`}>
-          <TableCell className="w-[50px]"><Skeleton className="h-5 w-5" /></TableCell>
-          {columns.map((col) => <TableCell key={col.key}><Skeleton className="h-5 w-full" /></TableCell>)}
-        </TableRow>
+        <tr key={`loading-${i}`} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+          <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 w-[50px]"><Skeleton className="h-5 w-5" /></td>
+          {columns.map((col) => <td key={col.key} className="p-4 align-middle [&:has([role=checkbox])]:pr-0"><Skeleton className="h-5 w-full" /></td>)}
+        </tr>
      ))
   );
 
@@ -223,26 +280,22 @@ export function GenericOverviewTable<T extends { id: string }>({
       <div className="rounded-md border">
         <div 
           ref={scrollContainerRef}
-          className="relative w-full overflow-x-auto overflow-y-visible [&::-webkit-scrollbar]:hidden"
-          style={{ 
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
-          }}
+          className="relative w-full overflow-x-auto overflow-y-visible"
         >
-          <Table className="border-separate" style={{ minWidth: '100%', width: 'max-content' }}>
-            <TableCaption>{caption}</TableCaption>
+          <table className="w-full caption-bottom text-sm border-separate" style={{ minWidth: '100%', width: 'max-content' }}>
+            <caption className="mt-4 text-sm text-muted-foreground">{caption}</caption>
             {/* Sticky table header under freeze pane */}
-            <TableHeader className="sticky z-30 bg-white shadow-sm" style={{ top: stickyTopOffset }}>
-              <TableRow>
-                <TableHead className="w-[50px] sticky z-30 bg-white" style={{ top: stickyTopOffset }}>
+            <thead className="sticky z-30 bg-white shadow-sm [&_tr]:border-b" style={{ top: stickyTopOffset }}>
+              <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 w-[50px] bg-white">
                   <Checkbox
                     checked={selectedIds.length > 0 && selectedIds.length === filteredData.length}
                     onCheckedChange={handleSelectAll}
                     aria-label="Select all"
                   />
-                </TableHead>
+                </th>
               {columns.map(col => (
-                <TableHead key={col.key} className="sticky z-30 bg-white" style={{ top: stickyTopOffset }}>
+                <th key={col.key} className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 bg-white">
                   {col.sortable ? (
                     <Button variant="ghost" onClick={() => requestSort(col.key)}>
                       {col.header}
@@ -251,37 +304,55 @@ export function GenericOverviewTable<T extends { id: string }>({
                   ) : (
                     col.header
                   )}
-                </TableHead>
+                </th>
               ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? renderLoadingState() : (
-                sortedData.length > 0 ? (
-                  sortedData.map(item => (
-                    <TableRow key={item.id} data-state={selection[item.id] && "selected"}>
-                      <TableCell>
+              </tr>
+            </thead>
+            <tbody className="[&_tr:last-child]:border-0">
+              {isLoading ? (
+                <>
+                  {renderLoadingState()}
+                </>
+              ) : sortedData.length > 0 ? (
+                sortedData.map((item, index) => {
+                  // Debug: log first few items to verify data is updating
+                  if (index < 3) {
+                    console.log(`GenericOverviewTable - Rendering row ${index}:`, {
+                      id: item.id,
+                      price: item.maandelijksePrijs,
+                      klantNaam: item.klantNaam
+                    });
+                  }
+                  return (
+                    <tr key={item.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted" data-state={selection[item.id] && "selected"}>
+                      <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
                         <Checkbox
                           checked={selection[item.id] || false}
                           onCheckedChange={(checked) => handleSelectRow(item.id, !!checked)}
                           aria-label={`Select row ${item.id}`}
                         />
-                      </TableCell>
-                    {columns.map(col => (
-                      <TableCell key={col.key}>{col.renderCell(item)}</TableCell>
-                    ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length + 1} className="h-24 text-center">
-                      No results.
-                    </TableCell>
-                  </TableRow>
-                )
+                      </td>
+                    {columns.map(col => {
+                      const cellValue = col.renderCell(item);
+                      const cellKey = col.key === 'maandelijksePrijs' 
+                        ? `${item.id}-${col.key}-${item.maandelijksePrijs}` 
+                        : `${item.id}-${col.key}`;
+                      return (
+                        <td key={cellKey} className="p-4 align-middle [&:has([role=checkbox])]:pr-0">{cellValue}</td>
+                      );
+                    })}
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                  <td colSpan={columns.length + 1} className="p-4 align-middle [&:has([role=checkbox])]:pr-0 h-24 text-center">
+                    No results.
+                  </td>
+                </tr>
               )}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         </div>
       </div>
       

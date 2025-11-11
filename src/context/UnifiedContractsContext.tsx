@@ -39,6 +39,11 @@ export function UnifiedContractsProvider({ children }: { children: ReactNode }) 
         ...doc.data()
       } as UnifiedContract));
 
+      console.log('UnifiedContractsContext - Fetched contracts:', {
+        count: fetchedContracts.length,
+        contracts: fetchedContracts.slice(0, 3).map(c => ({ id: c.id, klantNaam: c.klantNaam })) // Log first 3 for debugging
+      });
+
       setContracts(fetchedContracts);
     } catch (err: any) {
       console.error('Error fetching unified contracts:', err);
