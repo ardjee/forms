@@ -51,6 +51,10 @@ interface GenericOverviewTableProps<T extends { id: string }> {
   // Optional: expose sort state and handler for external use
   onSortChange?: (sortKey: string, direction: 'asc' | 'desc') => void;
   externalSortConfig?: { key: string; direction: 'asc' | 'desc' };
+  // Optional: ref to the table element for measuring
+  tableRef?: React.RefObject<HTMLTableElement>;
+  // Optional: hide the table header (when using external sticky header)
+  hideTableHeader?: boolean;
 }
 
 export function GenericOverviewTable<T extends { id: string }>({
@@ -67,6 +71,8 @@ export function GenericOverviewTable<T extends { id: string }>({
   stickyTopOffset = 0,
   onSortChange,
   externalSortConfig,
+  tableRef,
+  hideTableHeader = false,
 }: GenericOverviewTableProps<T>) {
   const [selection, setSelection] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState('');
@@ -280,12 +286,12 @@ export function GenericOverviewTable<T extends { id: string }>({
       <div className="rounded-md border">
         <div 
           ref={scrollContainerRef}
-          className="relative w-full overflow-x-auto overflow-y-visible"
+          className="relative w-full overflow-x-auto overflow-y-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
-          <table className="w-full caption-bottom text-sm border-separate" style={{ minWidth: '100%', width: 'max-content' }}>
+          <table ref={tableRef} className="w-full caption-bottom text-sm border-separate" style={{ minWidth: '100%', width: 'max-content' }}>
             <caption className="mt-4 text-sm text-muted-foreground">{caption}</caption>
             {/* Sticky table header under freeze pane */}
-            <thead className="sticky z-30 bg-white shadow-sm [&_tr]:border-b" style={{ top: stickyTopOffset }}>
+            <thead className={`sticky z-30 bg-white shadow-sm [&_tr]:border-b ${hideTableHeader ? 'invisible h-0 overflow-hidden' : ''}`} style={{ top: stickyTopOffset }}>
               <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                 <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 w-[50px] bg-white">
                   <Checkbox

@@ -139,6 +139,12 @@ function UnifiedDataPageContent() {
   // Order summary modal state
   const [selectedContract, setSelectedContract] = useState<UnifiedContract | null>(null);
   
+  // Refs and state for sticky header synchronization
+  const tableRef = useRef<HTMLTableElement>(null);
+  const headerScrollRef = useRef<HTMLDivElement>(null);
+  const tableScrollContainerRef = useRef<HTMLDivElement>(null);
+  const [columnWidths, setColumnWidths] = useState<number[]>([]);
+  
   const handleSortChange = (key: string, direction: 'asc' | 'desc') => {
     setSortConfig({ key, direction });
   };
@@ -221,6 +227,73 @@ function UnifiedDataPageContent() {
     });
     return filtered;
   }, [contracts, filterType, filterStatus, searchTerm]);
+
+  // Measure column widths for sticky header synchronization
+  useEffect(() => {
+    if (!tableRef.current || isLoading || filteredContracts.length === 0) return;
+    
+    const measureColumnWidths = () => {
+      const table = tableRef.current;
+      if (!table) return;
+      
+      // Get the first row of cells to measure
+      const firstRow = table.querySelector('tbody tr:first-child');
+      if (!firstRow) return;
+      
+      const cells = firstRow.querySelectorAll('td');
+      const widths = Array.from(cells).map(cell => cell.getBoundingClientRect().width);
+      
+      setColumnWidths(widths);
+    };
+    
+    // Measure after render
+    const timeoutId = setTimeout(measureColumnWidths, 100);
+    
+    // Remeasure on window resize
+    window.addEventListener('resize', measureColumnWidths);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', measureColumnWidths);
+    };
+  }, [filteredContracts, isLoading, viewMode]);
+
+  // Synchronize scroll between header and table
+  useEffect(() => {
+    const headerScroll = headerScrollRef.current;
+    const tableContainer = tableRef.current?.closest('.overflow-x-auto') as HTMLDivElement;
+    
+    if (!headerScroll || !tableContainer) return;
+    
+    let isScrollingHeader = false;
+    let isScrollingTable = false;
+    
+    const handleHeaderScroll = () => {
+      if (isScrollingTable) return;
+      isScrollingHeader = true;
+      tableContainer.scrollLeft = headerScroll.scrollLeft;
+      requestAnimationFrame(() => {
+        isScrollingHeader = false;
+      });
+    };
+    
+    const handleTableScroll = () => {
+      if (isScrollingHeader) return;
+      isScrollingTable = true;
+      headerScroll.scrollLeft = tableContainer.scrollLeft;
+      requestAnimationFrame(() => {
+        isScrollingTable = false;
+      });
+    };
+    
+    headerScroll.addEventListener('scroll', handleHeaderScroll);
+    tableContainer.addEventListener('scroll', handleTableScroll);
+    
+    return () => {
+      headerScroll.removeEventListener('scroll', handleHeaderScroll);
+      tableContainer.removeEventListener('scroll', handleTableScroll);
+    };
+  }, [columnWidths]);
 
   // Group contracts by customer
   const customerGroups = useMemo((): CustomerGroup[] => {
@@ -712,22 +785,28 @@ function UnifiedDataPageContent() {
               {/* View Mode Toggle */}
               <div>
                 <Label className="text-sm font-medium mb-2 block">Weergave</Label>
-                <RadioGroup value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)} className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="list" id="list" />
-                    <Label htmlFor="list" className="flex items-center gap-2 cursor-pointer">
-                      <List className="h-4 w-4" />
-                      Lijst weergave
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="customer" id="customer" />
-                    <Label htmlFor="customer" className="flex items-center gap-2 cursor-pointer">
-                      <Users className="h-4 w-4" />
-                      Klant weergave
-                    </Label>
-                  </div>
-                </RadioGroup>
+                <div className="flex items-center justify-between">
+                  <RadioGroup value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)} className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="list" id="list" />
+                      <Label htmlFor="list" className="flex items-center gap-2 cursor-pointer">
+                        <List className="h-4 w-4" />
+                        Lijst weergave
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="customer" id="customer" />
+                      <Label htmlFor="customer" className="flex items-center gap-2 cursor-pointer">
+                        <Users className="h-4 w-4" />
+                        Klant weergave
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  <Button onClick={handleDownloadCsv} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download CSV
+                  </Button>
+                </div>
               </div>
 
               {/* Filters */}
@@ -777,35 +856,6 @@ function UnifiedDataPageContent() {
                   </div>
                 </div>
               </div>
-
-              {/* Table Header Row - Only show in list view */}
-              {viewMode === 'list' && (
-                <div className="pt-4 border-t">
-                  <div className="overflow-x-auto -mx-6 px-6">
-                    <div className="inline-flex min-w-full gap-2 text-xs font-medium text-muted-foreground h-12 items-center">
-                      <div className="w-[50px] flex-shrink-0 px-4"></div>
-                      {columns.map((col) => (
-                        <div 
-                          key={col.key} 
-                          className={`px-4 flex-shrink-0 whitespace-nowrap h-12 flex items-center ${
-                            col.sortable ? 'cursor-pointer hover:text-foreground transition-colors' : ''
-                          }`}
-                          onClick={() => col.sortable && handleSortChange(col.key, sortConfig.key === col.key && sortConfig.direction === 'asc' ? 'desc' : 'asc')}
-                        >
-                          <div className="flex items-center gap-1">
-                            {col.header}
-                            {col.sortable && (
-                              <span className="text-xs">
-                                {sortConfig.key === col.key ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '⇅'}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -813,14 +863,41 @@ function UnifiedDataPageContent() {
         {/* Content based on view mode */}
         {viewMode === 'list' ? (
           <>
-            <div className="sticky z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" style={{ top: freezeHeight }}>
-              <div className="flex justify-end items-center py-2">
-                <Button onClick={handleDownloadCsv} variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download CSV
-                </Button>
+            {/* Sticky Header */}
+            {columnWidths.length > 0 && (
+              <div 
+                ref={headerScrollRef}
+                className="sticky z-40 bg-white border-b shadow-sm overflow-x-auto overflow-y-hidden"
+                style={{ top: freezeHeight }}
+              >
+                <div className="flex items-center h-12 text-xs font-medium text-muted-foreground">
+                  {/* Checkbox column */}
+                  <div 
+                    className="flex-shrink-0 px-4"
+                    style={{ width: `${columnWidths[0]}px` }}
+                  />
+                  {/* Data columns */}
+                  {columns.map((col, index) => (
+                    <div
+                      key={col.key}
+                      className={`flex-shrink-0 px-4 flex items-center ${
+                        col.sortable ? 'cursor-pointer hover:text-foreground transition-colors' : ''
+                      }`}
+                      style={{ width: `${columnWidths[index + 1]}px` }}
+                      onClick={() => col.sortable && handleSortChange(col.key, sortConfig.key === col.key && sortConfig.direction === 'asc' ? 'desc' : 'asc')}
+                    >
+                      <span className="truncate">{col.header}</span>
+                      {col.sortable && (
+                        <span className="ml-1 text-xs flex-shrink-0">
+                          {sortConfig.key === col.key ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '⇅'}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+            
             <GenericOverviewTable
             key={`table-${filteredContracts.length}-${filteredContracts.map(c => c.id).join(',').substring(0, 100)}`}
             data={filteredContracts}
@@ -834,6 +911,8 @@ function UnifiedDataPageContent() {
             stickyTopOffset={freezeHeight}
             externalSortConfig={sortConfig}
             onSortChange={handleSortChange}
+            tableRef={tableRef}
+            hideTableHeader={true}
             customActions={(selectedIds) => (
               <>
                 <Button
