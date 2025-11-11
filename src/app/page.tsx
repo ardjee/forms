@@ -230,7 +230,7 @@ export default function TarievenPage() {
                   <TableCell className="text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell className="text-xs sm:text-sm">Voorwaarden</TableCell>
+                  <TableCell className="text-xs sm:text-sm">Voorwaarden bij nieuwe cliënten</TableCell>
                   <TableCell className="text-center text-xs sm:text-sm">Eventuele Saneringsbeurt</TableCell>
                   <TableCell className="text-center text-xs sm:text-sm">Eventuele Saneringsbeurt</TableCell>
                 </TableRow>
