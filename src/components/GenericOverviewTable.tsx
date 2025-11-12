@@ -46,6 +46,10 @@ interface GenericOverviewTableProps<T extends { id: string }> {
   entityName?: string;
   onDownloadCsv?: () => void;
   customActions?: (selectedIds: string[]) => ReactNode;
+  // Optional: callback when selection changes (for external action buttons)
+  onSelectionChange?: (selectedIds: string[]) => void;
+  // Optional: hide internal action bar (when using external buttons)
+  hideActionBar?: boolean;
   // Optional: vertical offset for sticky elements under a page-level sticky header
   stickyTopOffset?: number;
   // Optional: expose sort state and handler for external use
@@ -68,6 +72,8 @@ export function GenericOverviewTable<T extends { id: string }>({
   entityName = 'items',
   onDownloadCsv,
   customActions,
+  onSelectionChange,
+  hideActionBar = false,
   stickyTopOffset = 0,
   onSortChange,
   externalSortConfig,
@@ -100,6 +106,13 @@ export function GenericOverviewTable<T extends { id: string }>({
   const isSyncingRef = useRef<boolean>(false);
   
   const selectedIds = useMemo(() => Object.keys(selection).filter(id => selection[id]), [selection]);
+
+  // Notify parent when selection changes
+  useEffect(() => {
+    if (onSelectionChange) {
+      onSelectionChange(selectedIds);
+    }
+  }, [selectedIds, onSelectionChange]);
 
   const filteredData = useMemo(() => {
     if (!data || !Array.isArray(data)) {
@@ -361,6 +374,22 @@ export function GenericOverviewTable<T extends { id: string }>({
           </table>
         </div>
       </div>
+
+      {/* Actions Bar - Shows when rows are selected (unless hidden) */}
+      {!hideActionBar && selectedIds.length > 0 && (
+        <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-md border">
+          {customActions && customActions(selectedIds)}
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={isDeleting}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete ({selectedIds.length})
+          </Button>
+        </div>
+      )}
       
       {/* Sticky scrollbar at bottom of viewport */}
       {showStickyScrollbar && (

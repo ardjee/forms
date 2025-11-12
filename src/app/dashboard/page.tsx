@@ -8,7 +8,7 @@ import type { UnifiedContract, ContractType } from '@/types';
 import { format, isValid as isValidDate, parseISO } from 'date-fns';
 import {
   AlertTriangle, User, Mail, Phone, FileText, LogOut,
-  Filter, Download, Users, List, Search, CheckCircle, XCircle, MapPin, CreditCard, Wrench, Eye
+  Filter, Download, Users, List, Search, CheckCircle, XCircle, MapPin, CreditCard, Wrench, Eye, Trash2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -139,6 +139,9 @@ function UnifiedDataPageContent() {
   // Order summary modal state
   const [selectedContract, setSelectedContract] = useState<UnifiedContract | null>(null);
   
+  // Selection state for action buttons
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  
   // Refs and state for sticky header synchronization
   const tableRef = useRef<HTMLTableElement>(null);
   const headerScrollRef = useRef<HTMLDivElement>(null);
@@ -157,6 +160,7 @@ function UnifiedDataPageContent() {
   const handleAcceptContracts = async (ids: string[]) => {
     try {
       await updateContractStatus(ids, 'Actief');
+      setSelectedIds([]); // Clear selection
       toast({
         title: "Abonnement(en) geaccepteerd",
         description: `${ids.length} abonnement(en) zijn gemarkeerd als Actief.`
@@ -173,6 +177,7 @@ function UnifiedDataPageContent() {
   const handleRejectContracts = async (ids: string[]) => {
     try {
       await updateContractStatus(ids, 'Geannuleerd');
+      setSelectedIds([]); // Clear selection
       toast({
         title: "Abonnement(en) geweigerd",
         description: `${ids.length} abonnement(en) zijn gemarkeerd als Geannuleerd.`
@@ -183,6 +188,15 @@ function UnifiedDataPageContent() {
         description: "Kon status niet bijwerken.",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleDeleteContracts = async (ids: string[]) => {
+    try {
+      await deleteContractsByIds(ids);
+      setSelectedIds([]); // Clear selection
+    } catch (error) {
+      // Error handling is done in deleteContractsByIds
     }
   };
 
@@ -802,10 +816,43 @@ function UnifiedDataPageContent() {
                       </Label>
                     </div>
                   </RadioGroup>
-                  <Button onClick={handleDownloadCsv} variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download CSV
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {/* Action buttons when rows are selected */}
+                    {selectedIds.length > 0 && (
+                      <>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleAcceptContracts(selectedIds)}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Accepteren ({selectedIds.length})
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRejectContracts(selectedIds)}
+                          className="border-red-600 text-red-600 hover:bg-red-50"
+                        >
+                          <XCircle className="mr-2 h-4 w-4" />
+                          Weigeren ({selectedIds.length})
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteContracts(selectedIds)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Verwijderen ({selectedIds.length})
+                        </Button>
+                      </>
+                    )}
+                    <Button onClick={handleDownloadCsv} variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download CSV
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -913,28 +960,8 @@ function UnifiedDataPageContent() {
             onSortChange={handleSortChange}
             tableRef={tableRef}
             hideTableHeader={true}
-            customActions={(selectedIds) => (
-              <>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => handleAcceptContracts(selectedIds)}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Accepteren ({selectedIds.length})
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleRejectContracts(selectedIds)}
-                  className="border-red-600 text-red-600 hover:bg-red-50"
-                >
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Weigeren ({selectedIds.length})
-                </Button>
-              </>
-            )}
+            hideActionBar={true}
+            onSelectionChange={setSelectedIds}
           />
           </>
         ) : (
