@@ -1,13 +1,17 @@
 import { resend } from './resend';
 import { generateConfirmationEmailHtml, generateConfirmationEmailText, ConfirmationEmailData } from './templates';
+import { sendAbelencoEmail } from './sendAbelenco';
+import { generateOrderDetails } from './generateOrderDetails';
+import type { UnifiedContract } from '@/types';
 
 export interface SendConfirmationEmailOptions {
   to: string;
   name: string;
+  contractData?: UnifiedContract; // Optional contract data for Abel&Co email
 }
 
 export async function sendConfirmationEmail(options: SendConfirmationEmailOptions) {
-  const { to, name } = options;
+  const { to, name, contractData } = options;
 
   // Check if API key exists
   if (!process.env.RESEND_API_KEY) {
@@ -40,6 +44,20 @@ export async function sendConfirmationEmail(options: SendConfirmationEmailOption
     console.log('[EMAIL] Confirmation email sent successfully!');
     console.log('[EMAIL] Email ID:', data?.id);
     console.log('[EMAIL] Sent to:', to);
+
+    // Send separate email to Abel&Co if contract data is provided
+    if (contractData) {
+      try {
+        const details = generateOrderDetails(contractData);
+        await sendAbelencoEmail({ details });
+        console.log('[EMAIL] Abel&Co email sent successfully!');
+      } catch (abelencoError) {
+        console.error('[EMAIL] Failed to send Abel&Co email:', abelencoError);
+        // Don't fail the entire process if Abel&Co email fails
+        // The customer confirmation email was already sent successfully
+      }
+    }
+
     return { success: true, data };
   } catch (error) {
     console.error('[EMAIL] Exception sending confirmation email:', error);

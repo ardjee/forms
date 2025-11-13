@@ -40,11 +40,12 @@ const verwerkCvContractFlow = ai.defineFlow(
 
       console.log(`CV Contract opgeslagen met ID: ${documentId}`);
 
-      // Send confirmation email to customer
+      // Send confirmation email to customer and Abel&Co
       try {
         await sendConfirmationEmail({
           to: formData.klantEmail,
           name: formData.klantNaam,
+          contractData: dataToSave as any, // Pass contract data for Abel&Co email
         });
         console.log(`Confirmation email sent to: ${formData.klantEmail}`);
       } catch (emailError) {

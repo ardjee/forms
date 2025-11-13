@@ -36,7 +36,6 @@ export async function sendAcceptanceEmail(options: SendAcceptanceEmailOptions) {
     const { data, error } = await resend.emails.send({
       from: 'ZON-ECN <onderhoud@zon-ecn.nl>',
       to: [to],
-      bcc: ['info@abelenco.nl'],
       subject: 'Uw aanvraag bij ZON-ECN is goedgekeurd!',
       html: generateAcceptanceEmailHtml(emailData),
       text: generateAcceptanceEmailText(emailData),
@@ -51,7 +50,6 @@ export async function sendAcceptanceEmail(options: SendAcceptanceEmailOptions) {
     console.log('[EMAIL] Acceptance email sent successfully!');
     console.log('[EMAIL] Email ID:', data?.id);
     console.log('[EMAIL] Sent to:', to);
-    console.log('[EMAIL] BCC to: info@abelenco.nl');
     return { success: true, data };
   } catch (error) {
     console.error('[EMAIL] Exception sending acceptance email:', error);
