@@ -350,6 +350,32 @@ function UnifiedDataPageContent() {
       },
     },
     {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      renderCell: (contract) => {
+        const getStatusStyle = (status: string) => {
+          switch (status) {
+            case 'Actief':
+              return 'bg-green-100 text-green-800 border-green-200';
+            case 'Nieuw':
+              return 'bg-gray-100 text-gray-800 border-gray-200';
+            case 'Geannuleerd':
+              return 'bg-red-100 text-red-800 border-red-200';
+            case 'In behandeling':
+              return 'bg-blue-100 text-blue-800 border-blue-200';
+            default:
+              return 'bg-gray-100 text-gray-800 border-gray-200';
+          }
+        };
+        return (
+          <Badge variant="outline" className={getStatusStyle(contract.status)}>
+            {contract.status}
+          </Badge>
+        );
+      },
+    },
+    {
       key: 'contractType',
       header: 'Type',
       sortable: true,
@@ -612,32 +638,6 @@ function UnifiedDataPageContent() {
       },
     },
     {
-      key: 'status',
-      header: 'Status',
-      sortable: true,
-      renderCell: (contract) => {
-        const getStatusStyle = (status: string) => {
-          switch (status) {
-            case 'Actief':
-              return 'bg-green-100 text-green-800 border-green-200';
-            case 'Nieuw':
-              return 'bg-gray-100 text-gray-800 border-gray-200';
-            case 'Geannuleerd':
-              return 'bg-red-100 text-red-800 border-red-200';
-            case 'In behandeling':
-              return 'bg-blue-100 text-blue-800 border-blue-200';
-            default:
-              return 'bg-gray-100 text-gray-800 border-gray-200';
-          }
-        };
-        return (
-          <Badge variant="outline" className={getStatusStyle(contract.status)}>
-            {contract.status}
-          </Badge>
-        );
-      },
-    },
-    {
       key: 'ingangsdatum',
       header: 'Ingang',
       sortable: true,
@@ -848,10 +848,10 @@ function UnifiedDataPageContent() {
                         </Button>
                       </>
                     )}
-                    <Button onClick={handleDownloadCsv} variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download CSV
-                    </Button>
+                  <Button onClick={handleDownloadCsv} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download CSV
+                  </Button>
                   </div>
                 </div>
               </div>
@@ -984,14 +984,46 @@ function UnifiedDataPageContent() {
           </DialogHeader>
           {selectedContract && (
             <div className="mt-4">
-              <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-500 rounded">
-                <p className="text-sm font-semibold text-gray-800 mb-2">Abonnementsgegevens:</p>
-                <div className="space-y-1 text-sm text-gray-700">
-                  <p>• Abonnement: {selectedContract.typeAbonnement === 'onderhoud' ? 'Onderhoud' : selectedContract.typeAbonnement === 'service-plus' ? 'Service Plus' : selectedContract.typeAbonnement}</p>
-                  <p>• Frequentie: {selectedContract.onderhoudsfrequentie} maanden</p>
-                  {selectedContract.maandelijksePrijs !== undefined && (
-                    <p>• Maandbedrag: €{selectedContract.maandelijksePrijs.toFixed(2)} per maand</p>
-                  )}
+              <div className="mb-6 flex items-center gap-4 flex-wrap">
+                <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded flex-shrink-0">
+                  <p className="text-sm font-semibold text-gray-800 mb-2">Abonnementsgegevens:</p>
+                  <div className="space-y-1 text-sm text-gray-700">
+                    <p>• Abonnement: {selectedContract.typeAbonnement === 'onderhoud' ? 'Onderhoud' : selectedContract.typeAbonnement === 'service-plus' ? 'Service Plus' : selectedContract.typeAbonnement}</p>
+                    <p>• Frequentie: {selectedContract.onderhoudsfrequentie} maanden</p>
+                    {selectedContract.maandelijksePrijs !== undefined && (
+                      <p>• Maandbedrag: €{selectedContract.maandelijksePrijs.toFixed(2)} per maand</p>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Action buttons */}
+                <div className="flex gap-3 ml-auto">
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      if (selectedContract) {
+                        await handleRejectContracts([selectedContract.id]);
+                        setSelectedContract(null);
+                      }
+                    }}
+                    className="border-red-600 text-red-600 hover:bg-red-50"
+                  >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Weigeren
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={async () => {
+                      if (selectedContract) {
+                        await handleAcceptContracts([selectedContract.id]);
+                        setSelectedContract(null);
+                      }
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Accepteren
+                  </Button>
                 </div>
               </div>
               
