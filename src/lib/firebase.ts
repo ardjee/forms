@@ -47,4 +47,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// Export project ID for debugging
+export const firebaseProjectId = firebaseConfig.projectId;
+
 export { app, db, storage };

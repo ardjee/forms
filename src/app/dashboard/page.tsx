@@ -19,7 +19,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useDeferredValue } from 'react';
 import { recalculatePrice } from '@/utils/priceCalculation';
 import { GenericOverviewTable, type ColumnDef } from '@/components/GenericOverviewTable';
 import {
@@ -133,8 +133,13 @@ function UnifiedDataPageContent() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   
+<<<<<<< HEAD
   // Sort state
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'createdAt', direction: 'desc' });
+=======
+  // Deferred search term for better performance (prevents UI blocking)
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+>>>>>>> 83789ae (Fix Firebase project separation and dashboard performance)
   
   // Order summary modal state
   const [selectedContract, setSelectedContract] = useState<UnifiedContract | null>(null);
@@ -219,9 +224,9 @@ function UnifiedDataPageContent() {
         return false;
       }
 
-      // Search filter
-      if (searchTerm) {
-        const search = searchTerm.toLowerCase();
+      // Search filter (using deferred value for better performance)
+      if (deferredSearchTerm) {
+        const search = deferredSearchTerm.toLowerCase();
         return (
           contract.klantNaam?.toLowerCase().includes(search) ||
           contract.klantEmail?.toLowerCase().includes(search) ||
@@ -231,6 +236,7 @@ function UnifiedDataPageContent() {
 
       return true;
     });
+<<<<<<< HEAD
     console.log('Dashboard - Filtered contracts result:', {
       filteredCount: filtered.length,
       firstFew: filtered.slice(0, 3).map(c => ({ 
@@ -241,6 +247,9 @@ function UnifiedDataPageContent() {
     });
     return filtered;
   }, [contracts, filterType, filterStatus, searchTerm]);
+=======
+  }, [contracts, filterType, filterStatus, deferredSearchTerm]);
+>>>>>>> 83789ae (Fix Firebase project separation and dashboard performance)
 
   // Measure column widths for sticky header synchronization
   useEffect(() => {
@@ -747,11 +756,86 @@ function UnifiedDataPageContent() {
   };
 
   if (error) {
+    // Check if error contains Firebase project info
+    const hasProjectInfo = error.includes('Firebase Project ID:');
+    const errorLines = error.split('\n');
+    const projectIdLine = errorLines.find(line => line.includes('Firebase Project ID:'));
+    const linkLine = errorLines.find(line => line.includes('console.firebase.google.com'));
+    
     return (
-      <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16 py-4 md:py-8 text-center text-destructive">
-        <AlertTriangle className="mx-auto h-12 w-12 mb-4"/>
-        <h2 className="text-xl font-semibold">Fout bij laden</h2>
-        <p>{error}</p>
+      <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16 py-4 md:py-8">
+        <Card className="max-w-2xl mx-auto border-destructive">
+          <CardHeader>
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-6 w-6"/>
+              <CardTitle>Database Fout</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {errorLines[0]}
+            </p>
+            {hasProjectInfo && (
+              <div className="p-4 bg-muted rounded-lg space-y-2">
+                <p className="text-sm font-semibold">Firebase Project Informatie:</p>
+                {projectIdLine && (
+                  <p className="text-sm font-mono bg-background p-2 rounded">
+                    {projectIdLine.replace('Firebase Project ID: ', '')}
+                  </p>
+                )}
+                {linkLine && (
+                  <a 
+                    href={linkLine.trim()} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline block"
+                  >
+                    🔗 Open Firestore Security Rules in Firebase Console
+                  </a>
+                )}
+              </div>
+            )}
+            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-sm font-semibold mb-2">Hoe op te lossen:</p>
+              <ol className="text-sm space-y-1 list-decimal list-inside mb-3">
+                <li>Klik op de link hierboven om naar Firebase Console te gaan</li>
+                <li>Ga naar het tabblad <strong>Rules</strong> (Regels)</li>
+                <li>Vervang ALLE bestaande rules met deze code:</li>
+              </ol>
+              <pre className="p-3 bg-background rounded text-xs overflow-x-auto border mb-3">
+{`rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /contracts/{document=**} {
+      allow read, write: if true;
+    }
+    match /cv-contract/{document=**} {
+      allow read, write: if true;
+    }
+    match /airco-contracten/{document=**} {
+      allow read, write: if true;
+    }
+    match /warmtepomp-contracten/{document=**} {
+      allow read, write: if true;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}`}
+              </pre>
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+                <p className="text-xs font-semibold mb-1">⚠️ Belangrijk:</p>
+                <ul className="text-xs space-y-1 list-disc list-inside">
+                  <li>Verwijder ALLE oude rules eerst</li>
+                  <li>Klik op <strong>Publish</strong> na het plakken</li>
+                  <li>Wacht 1-2 minuten, refresh dan je browser (Ctrl+Shift+R)</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
