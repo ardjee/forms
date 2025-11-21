@@ -151,4 +151,18 @@ export interface UnifiedContract {
   ingangsdatum: string;
   akkoordVoorwaarden: boolean;
   iban: string;
+
+  // Syntess matching
+  syntessMatch?: {
+    installatieOmschrijving: string;
+  };
+}
+
+// Syntess Contract interface for existing contracts
+export interface SyntessContract {
+  adres: string;
+  postcode: string;
+  plaats: string;
+  installatieOmschrijving: string;
+  importedAt: number;
 }

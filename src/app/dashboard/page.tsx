@@ -22,6 +22,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { recalculatePrice } from '@/utils/priceCalculation';
 import { GenericOverviewTable, type ColumnDef } from '@/components/GenericOverviewTable';
+import Logo from '@/components/logo';
 import {
   Dialog,
   DialogContent,
@@ -242,6 +243,33 @@ function UnifiedDataPageContent() {
     return filtered;
   }, [contracts, filterType, filterStatus, searchTerm]);
 
+  // Calculate status breakdown
+  const statusBreakdown = useMemo(() => {
+    const breakdown = {
+      Nieuw: 0,
+      Actief: 0,
+      Geannuleerd: 0,
+      'In behandeling': 0,
+    };
+    
+    filteredContracts.forEach(contract => {
+      const status = contract.status as keyof typeof breakdown;
+      if (breakdown[status] !== undefined) {
+        breakdown[status]++;
+      }
+    });
+    
+    return breakdown;
+  }, [filteredContracts]);
+
+  // Calculate total monthly income
+  const totalMonthlyIncome = useMemo(() => {
+    return filteredContracts.reduce((total, contract) => {
+      const price = contract.maandelijksePrijs || 0;
+      return total + price;
+    }, 0);
+  }, [filteredContracts]);
+
   // Measure column widths for sticky header synchronization
   useEffect(() => {
     if (!tableRef.current || isLoading || filteredContracts.length === 0) return;
@@ -373,6 +401,21 @@ function UnifiedDataPageContent() {
             {contract.status}
           </Badge>
         );
+      },
+    },
+    {
+      key: 'syntessMatch',
+      header: 'Bekend',
+      sortable: false,
+      renderCell: (contract) => {
+        if (contract.syntessMatch?.installatieOmschrijving) {
+          return (
+            <span className="text-xs truncate max-w-[200px]" title={contract.syntessMatch.installatieOmschrijving}>
+              {contract.syntessMatch.installatieOmschrijving}
+            </span>
+          );
+        }
+        return <span className="text-xs text-muted-foreground">Nee</span>;
       },
     },
     {
@@ -774,17 +817,34 @@ function UnifiedDataPageContent() {
         {/* Freeze pane: header + filters always visible */}
         <div ref={freezeRef} className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
           {/* Header */}
-          <header className="py-3 flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-primary font-headline">Dashboard</h1>
-              <p className="text-muted-foreground mt-1">
-                Overzicht van {filteredContracts.length} abonnement{filteredContracts.length !== 1 ? 'en' : ''}
-              </p>
+          <header className="py-3">
+            <div className="flex justify-between items-start relative">
+              <div>
+                <h1 className="text-3xl font-bold text-primary font-headline">Dashboard</h1>
+                <p className="text-muted-foreground mt-1">
+                  Overzicht van {filteredContracts.length} abonnement{filteredContracts.length !== 1 ? 'en' : ''}
+                </p>
+                <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                  <span>Nieuw: <span className="font-semibold text-foreground">{statusBreakdown.Nieuw}</span></span>
+                  <span>Actief: <span className="font-semibold text-green-600">{statusBreakdown.Actief}</span></span>
+                  <span>Geannuleerd: <span className="font-semibold text-red-600">{statusBreakdown.Geannuleerd}</span></span>
+                  {statusBreakdown['In behandeling'] > 0 && (
+                    <span>In behandeling: <span className="font-semibold text-blue-600">{statusBreakdown['In behandeling']}</span></span>
+                  )}
+                </div>
+                <div className="mt-2 text-sm">
+                  <span className="text-muted-foreground">Totale maandinkomsten: </span>
+                  <span className="font-semibold text-green-600">€{totalMonthlyIncome.toFixed(2)}</span>
+                </div>
+              </div>
+              <div className="absolute left-1/2 transform -translate-x-1/2">
+                <Logo />
+              </div>
+              <Button onClick={handleLogout} variant="outline" size="sm">
+                <LogOut className="h-4 w-4 mr-2" />
+                Uitloggen
+              </Button>
             </div>
-            <Button onClick={handleLogout} variant="outline" size="sm">
-              <LogOut className="h-4 w-4 mr-2" />
-              Uitloggen
-            </Button>
           </header>
 
           {/* Filters and View Mode */}

@@ -5,6 +5,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type {formSchema as AircoContractSchema} from '@/components/AircoContractForm';
 import { sendConfirmationEmail } from '@/lib/email/sendConfirmation';
+import { findMatchingSyntessContract } from '@/utils/addressMatching';
 
 export type AircoContractData = z.infer<typeof AircoContractSchema>;
 
@@ -39,6 +40,37 @@ const verwerkAircoContractFlow = ai.defineFlow(
       await setDoc(docRef, dataToSave);
 
       console.log(`Airco Contract opgeslagen met ID: ${documentId}`);
+
+      // Try to find matching Syntess contract
+      try {
+        const adres = formData.adresAfwijkend && formData.toestelAdres 
+          ? formData.toestelAdres 
+          : formData.klantAdres;
+        const postcode = formData.adresAfwijkend && formData.toestelPostcode 
+          ? formData.toestelPostcode 
+          : formData.klantPostcode;
+        const plaats = formData.adresAfwijkend && formData.toestelWoonplaats 
+          ? formData.toestelWoonplaats 
+          : formData.klantWoonplaats;
+
+        const syntessMatch = await findMatchingSyntessContract(adres, postcode, plaats);
+        
+        if (syntessMatch) {
+          // Update contract with match
+          await setDoc(docRef, {
+            ...dataToSave,
+            syntessMatch: {
+              installatieOmschrijving: syntessMatch.installatieOmschrijving,
+            },
+          }, { merge: true });
+          console.log(`✅ Syntess match found: ${syntessMatch.installatieOmschrijving}`);
+        } else {
+          console.log('ℹ️  No Syntess match found for this address');
+        }
+      } catch (matchError) {
+        console.error('Error finding Syntess match:', matchError);
+        // Don't fail the entire submission if matching fails
+      }
 
       // Send confirmation email to customer and Abel&Co
       try {

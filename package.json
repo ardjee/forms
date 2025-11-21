@@ -9,7 +9,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "import:syntess": "tsx src/scripts/importSyntessContracts.ts",
+    "test:import": "tsx src/scripts/testSingleImport.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.13.0",

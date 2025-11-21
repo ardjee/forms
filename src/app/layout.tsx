@@ -2,7 +2,6 @@
 
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import HeaderLanding from '@/components/layout/header-landing';
 import { AppProviders } from '@/components/AppProviders';
 
 export default function RootLayout({
@@ -23,7 +22,6 @@ export default function RootLayout({
       <body className="min-h-screen bg-background font-body antialiased">
         <AppProviders>
           <div className="relative flex min-h-screen flex-col">
-            <HeaderLanding />
             <main className="flex-1">{children}</main>
             <footer className="border-t bg-muted/30 py-4">
               <div className="container mx-auto px-4 text-center">
