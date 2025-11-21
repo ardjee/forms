@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { collection, getDocs, deleteDoc, doc, query, orderBy, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, firebaseProjectId } from '@/lib/firebase';
 import type { UnifiedContract } from '@/types';
 // Removed direct import of sendAcceptanceEmail to avoid client-side secret usage
 // import { sendAcceptanceEmail } from '@/lib/email/sendAcceptance';
@@ -47,7 +47,16 @@ export function UnifiedContractsProvider({ children }: { children: ReactNode }) 
       setContracts(fetchedContracts);
     } catch (err: any) {
       console.error('Error fetching unified contracts:', err);
-      setError(err.message || 'Er is een fout opgetreden bij het ophalen van contracten.');
+      let errorMessage = err.message || 'Er is een fout opgetreden bij het ophalen van contracten.';
+      
+      // Add project ID to error message if permission denied
+      if (err.code === 'permission-denied' && firebaseProjectId) {
+        errorMessage += `\n\nFirebase Project ID: ${firebaseProjectId}\nGa naar: https://console.firebase.google.com/project/${firebaseProjectId}/firestore/rules\n\nCollectie: contracts\n\nMogelijke oorzaken:\n- Rules zijn niet gepubliceerd (klik op Publish)\n- Rules syntax is incorrect\n- Browser cache (probeer hard refresh: Ctrl+Shift+R)\n- Rules zijn nog niet doorgevoerd (wacht 1-2 minuten)`;
+      } else if (err.code === 'permission-denied') {
+        errorMessage += `\n\nCollectie: contracts\n\nControleer de Firestore Security Rules in Firebase Console.`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
