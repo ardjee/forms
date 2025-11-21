@@ -206,12 +206,6 @@ function UnifiedDataPageContent() {
 
   // Filter and search contracts
   const filteredContracts = useMemo(() => {
-    console.log('Dashboard - Filtering contracts:', {
-      totalContracts: contracts.length,
-      filterType,
-      filterStatus,
-      searchTerm,
-    });
     const filtered = contracts.filter(contract => {
       // Type filter
       if (filterType !== 'all' && contract.contractType !== filterType) {
@@ -234,14 +228,6 @@ function UnifiedDataPageContent() {
       }
 
       return true;
-    });
-    console.log('Dashboard - Filtered contracts result:', {
-      filteredCount: filtered.length,
-      firstFew: filtered.slice(0, 3).map(c => ({ 
-        id: c.id, 
-        klantNaam: c.klantNaam,
-        price: c.maandelijksePrijs 
-      }))
     });
     return filtered;
   }, [contracts, filterType, filterStatus, deferredSearchTerm]);
