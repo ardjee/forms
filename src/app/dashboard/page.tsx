@@ -134,13 +134,11 @@ function UnifiedDataPageContent() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   
-<<<<<<< HEAD
   // Sort state
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'createdAt', direction: 'desc' });
-=======
+  
   // Deferred search term for better performance (prevents UI blocking)
   const deferredSearchTerm = useDeferredValue(searchTerm);
->>>>>>> 83789ae (Fix Firebase project separation and dashboard performance)
   
   // Order summary modal state
   const [selectedContract, setSelectedContract] = useState<UnifiedContract | null>(null);
@@ -237,7 +235,6 @@ function UnifiedDataPageContent() {
 
       return true;
     });
-<<<<<<< HEAD
     console.log('Dashboard - Filtered contracts result:', {
       filteredCount: filtered.length,
       firstFew: filtered.slice(0, 3).map(c => ({ 
@@ -247,10 +244,7 @@ function UnifiedDataPageContent() {
       }))
     });
     return filtered;
-  }, [contracts, filterType, filterStatus, searchTerm]);
-=======
   }, [contracts, filterType, filterStatus, deferredSearchTerm]);
->>>>>>> 83789ae (Fix Firebase project separation and dashboard performance)
 
   // Calculate status breakdown
   const statusBreakdown = useMemo(() => {
