@@ -53,3 +53,9 @@ export function generateOrderDetails(contract: UnifiedContract): { label: string
   return details;
 }
 
+
+
+
+
+
+

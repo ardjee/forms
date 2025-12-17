@@ -922,7 +922,6 @@ service cloud.firestore {
             <CardContent className="space-y-4">
               {/* View Mode Toggle */}
               <div>
-                <Label className="text-sm font-medium mb-2 block">Weergave</Label>
                 <div className="flex items-center justify-between">
                   <RadioGroup value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)} className="flex gap-4">
                     <div className="flex items-center space-x-2">

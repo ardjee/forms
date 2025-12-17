@@ -136,3 +136,11 @@ export function recalculatePrice(contract: UnifiedContract, newFreq: number): nu
   return parseFloat(totaalPrijs.toFixed(2));
 }
 
+
+
+
+
+
+
+
+
