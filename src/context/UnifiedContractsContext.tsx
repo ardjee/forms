@@ -100,39 +100,6 @@ export function UnifiedContractsProvider({ children }: { children: ReactNode }) 
 
         for (const contract of acceptedContracts) {
           try {
-            const details: { label: string; value: string }[] = [
-              { label: 'Contracttype', value: contract.contractType },
-              { label: 'Naam', value: contract.klantNaam },
-              { label: 'E-mail', value: contract.klantEmail },
-              { label: 'Telefoon', value: contract.klantTelefoon },
-              { label: 'Adres', value: contract.klantAdres },
-              { label: 'Postcode', value: contract.klantPostcode },
-              { label: 'Woonplaats', value: contract.klantWoonplaats },
-              contract.adresAfwijkend ? { label: 'Toesteladres', value: contract.toestelAdres || '' } : null,
-              contract.adresAfwijkend ? { label: 'Toestelpostcode', value: contract.toestelPostcode || '' } : null,
-              contract.adresAfwijkend ? { label: 'Toestel woonplaats', value: contract.toestelWoonplaats || '' } : null,
-              contract.merkToestel ? { label: 'Merk toestel', value: contract.merkToestel } : null,
-              contract.typeToestel ? { label: 'Type toestel', value: contract.typeToestel } : null,
-              contract.bouwjaar ? { label: 'Bouwjaar', value: contract.bouwjaar } : null,
-              contract.serienummer ? { label: 'Serienummer', value: contract.serienummer } : null,
-              contract.toestelMerk ? { label: 'Toestel merk', value: contract.toestelMerk } : null,
-              contract.toestelType ? { label: 'Toestel type', value: contract.toestelType } : null,
-              contract.toestelBouwjaar ? { label: 'Toestel bouwjaar', value: contract.toestelBouwjaar } : null,
-              contract.toestelSerienummer ? { label: 'Toestel serienummer', value: contract.toestelSerienummer } : null,
-              contract.aantalBinnenunits !== undefined ? { label: 'Aantal binnenunits', value: String(contract.aantalBinnenunits) } : null,
-              contract.cvVermogen ? { label: 'Vermogen CV', value: contract.cvVermogen } : null,
-              contract.reedsinOnderhoud ? { label: 'Reeds in onderhoud', value: contract.reedsinOnderhoud } : null,
-              { label: 'Onderhoudsfrequentie', value: `${contract.onderhoudsfrequentie} maanden` },
-              { label: 'Type abonnement', value: contract.typeAbonnement },
-              contract.monitoring ? { label: 'Monitoring', value: contract.monitoring } : null,
-              contract.voorrijdkosten ? { label: 'Voorrijdkosten', value: contract.voorrijdkosten } : null,
-              contract.toeslag ? { label: 'Toeslag', value: contract.toeslag } : null,
-              contract.maandelijksePrijs !== undefined ? { label: 'Maandprijs', value: `€${(contract.maandelijksePrijs || 0).toFixed(2)}` } : null,
-              { label: 'Ingangsdatum', value: contract.ingangsdatum },
-              { label: 'Akkoord voorwaarden', value: contract.akkoordVoorwaarden ? 'ja' : 'nee' },
-              { label: 'IBAN', value: contract.iban },
-            ].filter((x): x is { label: string; value: string } => !!x && x.value !== '' && x.value !== 'undefined');
-
             const contractTypeLabels: Record<string, string> = {
               'cv-ketel': 'CV-ketel',
               'warmtepomp-all-electric': 'Warmtepomp All-electric',
@@ -154,7 +121,40 @@ export function UnifiedContractsProvider({ children }: { children: ReactNode }) 
               'service-plus': 'Service Plus',
             };
 
-            // Call server API to send email (server has access to secrets)
+            const details: { label: string; value: string }[] = [
+              { label: 'Contracttype', value: contractTypeLabels[contract.contractType] || contract.contractType },
+              { label: 'Naam', value: contract.klantNaam },
+              { label: 'E-mail', value: contract.klantEmail },
+              { label: 'Telefoon', value: contract.klantTelefoon },
+              { label: 'Adres', value: contract.klantAdres },
+              { label: 'Postcode', value: contract.klantPostcode },
+              { label: 'Woonplaats', value: contract.klantWoonplaats },
+              contract.adresAfwijkend ? { label: 'Toesteladres', value: contract.toestelAdres || '' } : null,
+              contract.adresAfwijkend ? { label: 'Toestelpostcode', value: contract.toestelPostcode || '' } : null,
+              contract.adresAfwijkend ? { label: 'Toestel woonplaats', value: contract.toestelWoonplaats || '' } : null,
+              contract.merkToestel ? { label: 'Merk toestel', value: contract.merkToestel } : null,
+              contract.typeToestel ? { label: 'Type toestel', value: contract.typeToestel } : null,
+              contract.bouwjaar ? { label: 'Bouwjaar', value: contract.bouwjaar } : null,
+              contract.serienummer ? { label: 'Serienummer', value: contract.serienummer } : null,
+              contract.toestelMerk ? { label: 'Toestel merk', value: contract.toestelMerk } : null,
+              contract.toestelType ? { label: 'Toestel type', value: contract.toestelType } : null,
+              contract.toestelBouwjaar ? { label: 'Toestel bouwjaar', value: contract.toestelBouwjaar } : null,
+              contract.toestelSerienummer ? { label: 'Toestel serienummer', value: contract.toestelSerienummer } : null,
+              contract.aantalBinnenunits !== undefined ? { label: 'Aantal binnenunits', value: String(contract.aantalBinnenunits) } : null,
+              contract.cvVermogen ? { label: 'Vermogen CV', value: contract.cvVermogen } : null,
+              contract.reedsinOnderhoud ? { label: 'Reeds in onderhoud', value: contract.reedsinOnderhoud } : null,
+              { label: 'Onderhoudsfrequentie', value: `${contract.onderhoudsfrequentie} maanden` },
+              { label: 'Type abonnement', value: abonnementLabels[contract.typeAbonnement] || contract.typeAbonnement },
+              contract.monitoring ? { label: 'Monitoring', value: contract.monitoring } : null,
+              contract.voorrijdkosten ? { label: 'Voorrijdkosten', value: contract.voorrijdkosten } : null,
+              contract.toeslag ? { label: 'Toeslag', value: contract.toeslag } : null,
+              contract.maandelijksePrijs !== undefined ? { label: 'Maandprijs', value: `€${(contract.maandelijksePrijs || 0).toFixed(2)}` } : null,
+              { label: 'Ingangsdatum', value: contract.ingangsdatum },
+              { label: 'Akkoord voorwaarden', value: contract.akkoordVoorwaarden ? 'ja' : 'nee' },
+              { label: 'IBAN', value: contract.iban },
+            ].filter((x): x is { label: string; value: string } => !!x && x.value !== '' && x.value !== 'undefined');
+
+            // Call server API to send acceptance email to customer (server has access to secrets)
             await fetch('/api/send-acceptance', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -170,6 +170,21 @@ export function UnifiedContractsProvider({ children }: { children: ReactNode }) 
             });
 
             console.log(`Acceptance email requested for: ${contract.klantEmail}`);
+
+            // Send Abelenco email when status becomes Actief
+            try {
+              await fetch('/api/send-abelenco', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  details,
+                }),
+              });
+              console.log(`Abelenco email sent for contract: ${contract.id}`);
+            } catch (abelencoError) {
+              console.error(`Failed to send Abelenco email for contract ${contract.id}:`, abelencoError);
+              // Don't throw - we don't want email failures to prevent status updates
+            }
           } catch (emailError) {
             console.error(`Failed to send acceptance email to ${contract.klantEmail}:`, emailError);
             // Don't throw - we don't want email failures to prevent status updates
