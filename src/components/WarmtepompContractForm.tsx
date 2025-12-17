@@ -36,13 +36,13 @@ export const formSchema = z.object({
   // Klantgegevens
   klantNaam: z.string().min(2, "Naam is verplicht."),
   klantAdres: z.string().min(2, "Adres is verplicht."),
-  klantPostcode: z.string().regex(/^[1-9][0-9]{3} ?(?!SA|SD|SS)[A-Z]{2}$/i, "Ongeldige postcode."),
+  klantPostcode: z.string().min(1, "Postcode is verplicht.").regex(/^[1-9][0-9]{3} ?(?!SA|SD|SS)[A-Z]{2}$/i, "Ongeldige postcode."),
   klantWoonplaats: z.string().min(2, "Woonplaats is verplicht."),
   klantTelefoon: z.string().min(10, "Ongeldig telefoonnummer."),
   klantEmail: z.string().email("Ongeldig e-mailadres."),
 
   // Toesteladres
-  adresAfwijkend: z.boolean().default(false),
+  adresAfwijkend: z.boolean().optional().default(false),
   toestelAdres: z.string().optional(),
   toestelPostcode: z.string().optional(),
   toestelWoonplaats: z.string().optional(),
@@ -224,19 +224,28 @@ export function WarmtepompContractForm() {
           <CardHeader><CardTitle>Klantgegevens</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="klantNaam" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel>Naam</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-              <FormField control={form.control} name="klantAdres" render={({ field }) => ( <FormItem><FormLabel>Adres</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-              <FormField control={form.control} name="klantPostcode" render={({ field }) => ( <FormItem><FormLabel>Postcode</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-              <FormField control={form.control} name="klantWoonplaats" render={({ field }) => ( <FormItem><FormLabel>Woonplaats</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-              <FormField control={form.control} name="klantTelefoon" render={({ field }) => ( <FormItem><FormLabel>Telefoonnummer</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem> )} />
-              <FormField control={form.control} name="klantEmail" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel>E-mailadres</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantNaam" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel required>Naam</FormLabel><FormControl><Input {...field} required /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantAdres" render={({ field }) => ( <FormItem><FormLabel required>Adres</FormLabel><FormControl><Input {...field} required /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantPostcode" render={({ field }) => ( <FormItem><FormLabel required>Postcode</FormLabel><FormControl><Input {...field} required /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantWoonplaats" render={({ field }) => ( <FormItem><FormLabel required>Woonplaats</FormLabel><FormControl><Input {...field} required /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantTelefoon" render={({ field }) => ( <FormItem><FormLabel required>Telefoonnummer</FormLabel><FormControl><Input type="tel" {...field} required /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantEmail" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel required>E-mailadres</FormLabel><FormControl><Input type="email" {...field} required /></FormControl><FormMessage /></FormItem> )} />
             </div>
           </CardContent>
         </Card>
 
         <FormField control={form.control} name="adresAfwijkend" render={({ field }) => (
             <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                <FormControl><Checkbox checked={field.value} onCheckedChange={(checked) => {
+                  field.onChange(checked);
+                  if (!checked) {
+                    // Clear the fields when checkbox is unchecked
+                    form.setValue("toestelAdres", "");
+                    form.setValue("toestelPostcode", "");
+                    form.setValue("toestelWoonplaats", "");
+                    form.setValue("toestelTelefoon", "");
+                  }
+                }} /></FormControl>
                 <div className="space-y-1 leading-none"><FormLabel>Toesteladres is afwijkend van debiteurenadres</FormLabel></div>
             </FormItem>
         )} />
@@ -257,14 +266,14 @@ export function WarmtepompContractForm() {
             <CardHeader><CardTitle>Gegevens Warmtepompsysteem</CardTitle></CardHeader>
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="merkToestel" render={({ field }) => ( <FormItem><FormLabel>Merk toestel *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                    <FormField control={form.control} name="typeToestel" render={({ field }) => ( <FormItem><FormLabel>Type toestel *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="merkToestel" render={({ field }) => ( <FormItem><FormLabel required>Merk toestel</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="typeToestel" render={({ field }) => ( <FormItem><FormLabel required>Type toestel</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                     <FormField
                         control={form.control}
                         name="bouwjaar"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Bouwjaar *</FormLabel>
+                            <FormLabel required>Bouwjaar</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
@@ -283,7 +292,7 @@ export function WarmtepompContractForm() {
                             </FormItem>
                         )}
                     />
-                    <FormField control={form.control} name="serienummer" render={({ field }) => ( <FormItem><FormLabel>Serienummer *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="serienummer" render={({ field }) => ( <FormItem><FormLabel required>Serienummer</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
                 </div>
             </CardContent>
         </Card>
@@ -303,7 +312,7 @@ export function WarmtepompContractForm() {
                   name="onderhoudsfrequentie"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Onderhoudsfrequentie</FormLabel>
+                      <FormLabel required>Onderhoudsfrequentie</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -326,7 +335,7 @@ export function WarmtepompContractForm() {
                   name="typeAbonnement"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Type abonnement</FormLabel>
+                      <FormLabel required>Type abonnement</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -348,7 +357,7 @@ export function WarmtepompContractForm() {
                   name="monitoring"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Monitoring Warmtepomp</FormLabel>
+                      <FormLabel required>Monitoring Warmtepomp</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -419,7 +428,7 @@ export function WarmtepompContractForm() {
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-4">
                         <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                         <div className="space-y-1 leading-none">
-                            <FormLabel>Hierbij ga ik akkoord met de <a href="/ZON_ECNI_Abelenco_ServiceAbon_voorwaarden.pdf" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Algemene Voorwaarden Onderhoudsabonnement Warmtepomp</a></FormLabel>
+                            <FormLabel required>Hierbij ga ik akkoord met de <a href="/ZON_ECNI_Abelenco_ServiceAbon_voorwaarden.pdf" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Algemene Voorwaarden Onderhoudsabonnement Warmtepomp</a></FormLabel>
                             <FormDescription>
                                 Overeenkomstig de Algemene Voorwaarden machtigt de klant Abel&co
                                 tot het incasseren van de maandelijkse vergoeding.
@@ -431,7 +440,7 @@ export function WarmtepompContractForm() {
 
                  <FormField control={form.control} name="iban" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>IBAN-nummer</FormLabel>
+                        <FormLabel required>IBAN-nummer</FormLabel>
                         <FormControl><Input placeholder="NL00BANK0000000000" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>

@@ -80,3 +80,9 @@
 .scrollbar-visible::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
+
+/* Remove left and top positioning from nextjs-portal */
+nextjs-portal {
+  left: unset;
+  top: unset;
+}

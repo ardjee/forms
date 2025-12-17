@@ -39,13 +39,13 @@ export const formSchema = z.object({
   // Klantgegevens
   klantNaam: z.string().min(2, "Naam is verplicht."),
   klantAdres: z.string().min(2, "Adres is verplicht."),
-  klantPostcode: z.string().regex(/^[1-9][0-9]{3} ?(?!SA|SD|SS)[A-Z]{2}$/i, "Ongeldige postcode."),
+  klantPostcode: z.string().min(1, "Postcode is verplicht.").regex(/^[1-9][0-9]{3} ?(?!SA|SD|SS)[A-Z]{2}$/i, "Ongeldige postcode."),
   klantWoonplaats: z.string().min(2, "Woonplaats is verplicht."),
   klantTelefoon: z.string().min(10, "Ongeldig telefoonnummer."),
   klantEmail: z.string().email("Ongeldig e-mailadres."),
 
   // Toesteladres
-  adresAfwijkend: z.boolean().default(false),
+  adresAfwijkend: z.boolean().optional().default(false),
   toestelAdres: z.string().optional(),
   toestelPostcode: z.string().optional(),
   toestelWoonplaats: z.string().optional(),
@@ -142,9 +142,9 @@ const ToestelCard = ({ form, toestelNum }: { form: any, toestelNum: 1 | 2 }) => 
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField control={form.control} name={`${fieldName}.merk`} render={({ field }) => ( <FormItem><FormLabel>Merk *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-          <FormField control={form.control} name={`${fieldName}.bouwjaar`} render={({ field }) => ( <FormItem><FormLabel>Bouwjaar *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-          <FormField control={form.control} name={`${fieldName}.type`} render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel>Type *</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+          <FormField control={form.control} name={`${fieldName}.merk`} render={({ field }) => ( <FormItem><FormLabel required>Merk</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+          <FormField control={form.control} name={`${fieldName}.bouwjaar`} render={({ field }) => ( <FormItem><FormLabel required>Bouwjaar</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+          <FormField control={form.control} name={`${fieldName}.type`} render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel required>Type</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
           <FormField control={form.control} name={`${fieldName}.serienummerBinnen`} render={({ field }) => ( <FormItem><FormLabel>Serienummer binnen-unit</FormLabel><FormControl><Input {...field} /></FormControl></FormItem> )} />
           <FormField control={form.control} name={`${fieldName}.serienummerBuiten`} render={({ field }) => ( <FormItem><FormLabel>Serienummer buiten-unit</FormLabel><FormControl><Input {...field} /></FormControl></FormItem> )} />
         </div>
@@ -257,19 +257,28 @@ export function AircoContractForm() {
           <CardHeader><CardTitle>Klantgegevens</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="klantNaam" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel>Naam</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-              <FormField control={form.control} name="klantAdres" render={({ field }) => ( <FormItem><FormLabel>Adres</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-              <FormField control={form.control} name="klantPostcode" render={({ field }) => ( <FormItem><FormLabel>Postcode</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-              <FormField control={form.control} name="klantWoonplaats" render={({ field }) => ( <FormItem><FormLabel>Woonplaats</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-              <FormField control={form.control} name="klantTelefoon" render={({ field }) => ( <FormItem><FormLabel>Telefoonnummer</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem> )} />
-              <FormField control={form.control} name="klantEmail" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel>E-mailadres</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantNaam" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel required>Naam</FormLabel><FormControl><Input {...field} required /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantAdres" render={({ field }) => ( <FormItem><FormLabel required>Adres</FormLabel><FormControl><Input {...field} required /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantPostcode" render={({ field }) => ( <FormItem><FormLabel required>Postcode</FormLabel><FormControl><Input {...field} required /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantWoonplaats" render={({ field }) => ( <FormItem><FormLabel required>Woonplaats</FormLabel><FormControl><Input {...field} required /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantTelefoon" render={({ field }) => ( <FormItem><FormLabel required>Telefoonnummer</FormLabel><FormControl><Input type="tel" {...field} required /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="klantEmail" render={({ field }) => ( <FormItem className="md:col-span-2"><FormLabel required>E-mailadres</FormLabel><FormControl><Input type="email" {...field} required /></FormControl><FormMessage /></FormItem> )} />
             </div>
           </CardContent>
         </Card>
 
         <FormField control={form.control} name="adresAfwijkend" render={({ field }) => (
             <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                <FormControl><Checkbox checked={field.value} onCheckedChange={(checked) => {
+                  field.onChange(checked);
+                  if (!checked) {
+                    // Clear the fields when checkbox is unchecked
+                    form.setValue("toestelAdres", "");
+                    form.setValue("toestelPostcode", "");
+                    form.setValue("toestelWoonplaats", "");
+                    form.setValue("toestelTelefoon", "");
+                  }
+                }} /></FormControl>
                 <div className="space-y-1 leading-none"><FormLabel>Toesteladres is afwijkend van debiteurenadres</FormLabel></div>
             </FormItem>
         )} />
@@ -336,7 +345,7 @@ export function AircoContractForm() {
           <CardContent className="space-y-4">
             <FormField control={form.control} name="iban" render={({ field }) => (
               <FormItem>
-                <FormLabel>IBAN-nummer</FormLabel>
+                <FormLabel required>IBAN-nummer</FormLabel>
                 <FormControl><Input {...field} placeholder="NL00BANK0123456789" /></FormControl>
                 <FormDescription>
                   Het maandelijkse bedrag wordt automatisch geïncasseerd van dit rekeningnummer.
@@ -354,7 +363,7 @@ export function AircoContractForm() {
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-4">
                     <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                     <div className="space-y-1 leading-none">
-                        <FormLabel>Ik ga akkoord met de <a href="/ZON_ECNI_Abelenco_ServiceAbonForm_Airco.pdf" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Algemene Voorwaarden Onderhoudsabonnement Airconditioning</a></FormLabel>
+                        <FormLabel required>Ik ga akkoord met de <a href="/ZON_ECNI_Abelenco_ServiceAbonForm_Airco.pdf" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Algemene Voorwaarden Onderhoudsabonnement Airconditioning</a></FormLabel>
                         <FormDescription>
                             Overeenkomstig de Algemene Voorwaarden machtigt de klant Abel&co
                             tot het incasseren van de maandelijkse vergoeding.
