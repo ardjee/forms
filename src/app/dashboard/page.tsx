@@ -29,6 +29,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 
 // Contract type labels
@@ -145,6 +155,12 @@ function UnifiedDataPageContent() {
   
   // Selection state for action buttons
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Editable cell state
+  const [editingCell, setEditingCell] = useState<{ contractId: string; field: string } | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
+  const [pendingEdit, setPendingEdit] = useState<{ contractId: string; field: string; value: string } | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
   // Refs and state for sticky header synchronization
   const tableRef = useRef<HTMLTableElement>(null);
@@ -421,115 +437,482 @@ function UnifiedDataPageContent() {
       key: 'toestelMerk',
       header: 'Merk',
       sortable: true,
-      renderCell: (contract) => (
-        <div className="flex items-center gap-1">
-          <Wrench className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-          <span className="text-xs truncate max-w-[100px]">
-            {contract.merkToestel || contract.toestelMerk || '-'}
-          </span>
-        </div>
-      ),
+      renderCell: (contract) => {
+        const fieldValue = contract.merkToestel || contract.toestelMerk || '';
+        const isEditing = editingCell?.contractId === contract.id && editingCell?.field === 'merkToestel';
+        if (isEditing) {
+          return (
+            <Input
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => {
+                if (editValue !== fieldValue) {
+                  setPendingEdit({ contractId: contract.id, field: 'merkToestel', value: editValue });
+                  setShowConfirmDialog(true);
+                }
+                setEditingCell(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (editValue !== fieldValue) {
+                    setPendingEdit({ contractId: contract.id, field: 'merkToestel', value: editValue });
+                    setShowConfirmDialog(true);
+                  }
+                  setEditingCell(null);
+                } else if (e.key === 'Escape') {
+                  setEditingCell(null);
+                }
+              }}
+              className="w-[100px] h-7 text-xs"
+              autoFocus
+            />
+          );
+        }
+        return (
+          <div 
+            className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditingCell({ contractId: contract.id, field: 'merkToestel' });
+              setEditValue(fieldValue);
+            }}
+            title="Dubbelklik om te bewerken"
+          >
+            <Wrench className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs truncate max-w-[100px]">
+              {fieldValue || '-'}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: 'toestelType',
       header: 'Model',
       sortable: true,
-      renderCell: (contract) => (
-        <div className="flex items-center gap-1">
-          <Wrench className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-          <span className="text-xs truncate max-w-[120px]">
-            {contract.typeToestel || contract.toestelType || '-'}
-          </span>
-        </div>
-      ),
+      renderCell: (contract) => {
+        const fieldValue = contract.typeToestel || contract.toestelType || '';
+        const isEditing = editingCell?.contractId === contract.id && editingCell?.field === 'typeToestel';
+        if (isEditing) {
+          return (
+            <Input
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => {
+                if (editValue !== fieldValue) {
+                  setPendingEdit({ contractId: contract.id, field: 'typeToestel', value: editValue });
+                  setShowConfirmDialog(true);
+                }
+                setEditingCell(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (editValue !== fieldValue) {
+                    setPendingEdit({ contractId: contract.id, field: 'typeToestel', value: editValue });
+                    setShowConfirmDialog(true);
+                  }
+                  setEditingCell(null);
+                } else if (e.key === 'Escape') {
+                  setEditingCell(null);
+                }
+              }}
+              className="w-[120px] h-7 text-xs"
+              autoFocus
+            />
+          );
+        }
+        return (
+          <div 
+            className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditingCell({ contractId: contract.id, field: 'typeToestel' });
+              setEditValue(fieldValue);
+            }}
+            title="Dubbelklik om te bewerken"
+          >
+            <Wrench className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs truncate max-w-[120px]">
+              {fieldValue || '-'}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: 'klantNaam',
       header: 'Klantnaam',
       sortable: true,
-      renderCell: (contract) => (
-        <div 
-          className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedContract(contract);
-          }}
-        >
-          <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-          <span className="font-medium truncate max-w-[150px] text-sm">{contract.klantNaam}</span>
-        </div>
-      ),
+      renderCell: (contract) => {
+        const isEditing = editingCell?.contractId === contract.id && editingCell?.field === 'klantNaam';
+        if (isEditing) {
+          return (
+            <Input
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => {
+                if (editValue !== contract.klantNaam) {
+                  setPendingEdit({ contractId: contract.id, field: 'klantNaam', value: editValue });
+                  setShowConfirmDialog(true);
+                }
+                setEditingCell(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (editValue !== contract.klantNaam) {
+                    setPendingEdit({ contractId: contract.id, field: 'klantNaam', value: editValue });
+                    setShowConfirmDialog(true);
+                  }
+                  setEditingCell(null);
+                } else if (e.key === 'Escape') {
+                  setEditingCell(null);
+                }
+              }}
+              className="w-[150px] h-7 text-xs"
+              autoFocus
+            />
+          );
+        }
+        return (
+          <div 
+            className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedContract(contract);
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditingCell({ contractId: contract.id, field: 'klantNaam' });
+              setEditValue(contract.klantNaam);
+            }}
+            title="Dubbelklik om te bewerken"
+          >
+            <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <span className="font-medium truncate max-w-[150px] text-sm">{contract.klantNaam}</span>
+          </div>
+        );
+      },
     },
     {
       key: 'klantAdres',
       header: 'Adres',
       sortable: true,
-      renderCell: (contract) => (
-        <div className="flex items-center gap-1">
-          <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-          <span className="text-xs truncate max-w-[150px]">{contract.klantAdres}</span>
-        </div>
-      ),
+      renderCell: (contract) => {
+        const isEditing = editingCell?.contractId === contract.id && editingCell?.field === 'klantAdres';
+        if (isEditing) {
+          return (
+            <Input
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => {
+                if (editValue !== contract.klantAdres) {
+                  setPendingEdit({ contractId: contract.id, field: 'klantAdres', value: editValue });
+                  setShowConfirmDialog(true);
+                }
+                setEditingCell(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (editValue !== contract.klantAdres) {
+                    setPendingEdit({ contractId: contract.id, field: 'klantAdres', value: editValue });
+                    setShowConfirmDialog(true);
+                  }
+                  setEditingCell(null);
+                } else if (e.key === 'Escape') {
+                  setEditingCell(null);
+                }
+              }}
+              className="w-[150px] h-7 text-xs"
+              autoFocus
+            />
+          );
+        }
+        return (
+          <div 
+            className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditingCell({ contractId: contract.id, field: 'klantAdres' });
+              setEditValue(contract.klantAdres);
+            }}
+            title="Dubbelklik om te bewerken"
+          >
+            <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs truncate max-w-[150px]">{contract.klantAdres}</span>
+          </div>
+        );
+      },
     },
     {
       key: 'klantWoonplaats',
       header: 'Woonplaats',
       sortable: true,
-      renderCell: (contract) => (
-        <div className="flex items-center gap-1">
-          <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-          <span className="text-xs truncate max-w-[100px]">{contract.klantWoonplaats}</span>
-        </div>
-      ),
+      renderCell: (contract) => {
+        const isEditing = editingCell?.contractId === contract.id && editingCell?.field === 'klantWoonplaats';
+        if (isEditing) {
+          return (
+            <Input
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => {
+                if (editValue !== contract.klantWoonplaats) {
+                  setPendingEdit({ contractId: contract.id, field: 'klantWoonplaats', value: editValue });
+                  setShowConfirmDialog(true);
+                }
+                setEditingCell(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (editValue !== contract.klantWoonplaats) {
+                    setPendingEdit({ contractId: contract.id, field: 'klantWoonplaats', value: editValue });
+                    setShowConfirmDialog(true);
+                  }
+                  setEditingCell(null);
+                } else if (e.key === 'Escape') {
+                  setEditingCell(null);
+                }
+              }}
+              className="w-[100px] h-7 text-xs"
+              autoFocus
+            />
+          );
+        }
+        return (
+          <div 
+            className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditingCell({ contractId: contract.id, field: 'klantWoonplaats' });
+              setEditValue(contract.klantWoonplaats);
+            }}
+            title="Dubbelklik om te bewerken"
+          >
+            <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs truncate max-w-[100px]">{contract.klantWoonplaats}</span>
+          </div>
+        );
+      },
     },
     {
       key: 'klantEmail',
       header: 'Email',
       sortable: true,
-      renderCell: (contract) => (
-        <div className="flex items-center gap-1">
-          <Mail className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-          <a href={`mailto:${contract.klantEmail}`} className="hover:underline truncate max-w-[120px] text-xs">
-            {contract.klantEmail}
-          </a>
-        </div>
-      ),
+      renderCell: (contract) => {
+        const isEditing = editingCell?.contractId === contract.id && editingCell?.field === 'klantEmail';
+        if (isEditing) {
+          return (
+            <Input
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => {
+                if (editValue !== contract.klantEmail) {
+                  setPendingEdit({ contractId: contract.id, field: 'klantEmail', value: editValue });
+                  setShowConfirmDialog(true);
+                }
+                setEditingCell(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (editValue !== contract.klantEmail) {
+                    setPendingEdit({ contractId: contract.id, field: 'klantEmail', value: editValue });
+                    setShowConfirmDialog(true);
+                  }
+                  setEditingCell(null);
+                } else if (e.key === 'Escape') {
+                  setEditingCell(null);
+                }
+              }}
+              className="w-[120px] h-7 text-xs"
+              autoFocus
+            />
+          );
+        }
+        return (
+          <div 
+            className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditingCell({ contractId: contract.id, field: 'klantEmail' });
+              setEditValue(contract.klantEmail);
+            }}
+            title="Dubbelklik om te bewerken"
+          >
+            <Mail className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <a href={`mailto:${contract.klantEmail}`} className="hover:underline truncate max-w-[120px] text-xs">
+              {contract.klantEmail}
+            </a>
+          </div>
+        );
+      },
     },
     {
       key: 'klantTelefoon',
       header: 'Telefoon',
       sortable: false,
-      renderCell: (contract) => (
-        <div className="flex items-center gap-1">
-          <Phone className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-          <a href={`tel:${contract.klantTelefoon}`} className="hover:underline text-xs">
-            {contract.klantTelefoon}
-          </a>
-        </div>
-      ),
+      renderCell: (contract) => {
+        const isEditing = editingCell?.contractId === contract.id && editingCell?.field === 'klantTelefoon';
+        if (isEditing) {
+          return (
+            <Input
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => {
+                if (editValue !== contract.klantTelefoon) {
+                  setPendingEdit({ contractId: contract.id, field: 'klantTelefoon', value: editValue });
+                  setShowConfirmDialog(true);
+                }
+                setEditingCell(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (editValue !== contract.klantTelefoon) {
+                    setPendingEdit({ contractId: contract.id, field: 'klantTelefoon', value: editValue });
+                    setShowConfirmDialog(true);
+                  }
+                  setEditingCell(null);
+                } else if (e.key === 'Escape') {
+                  setEditingCell(null);
+                }
+              }}
+              className="w-[100px] h-7 text-xs"
+              autoFocus
+            />
+          );
+        }
+        return (
+          <div 
+            className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditingCell({ contractId: contract.id, field: 'klantTelefoon' });
+              setEditValue(contract.klantTelefoon);
+            }}
+            title="Dubbelklik om te bewerken"
+          >
+            <Phone className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <a href={`tel:${contract.klantTelefoon}`} className="hover:underline text-xs">
+              {contract.klantTelefoon}
+            </a>
+          </div>
+        );
+      },
     },
     {
       key: 'iban',
       header: 'IBAN',
       sortable: false,
-      renderCell: (contract) => (
-        <div className="flex items-center gap-1">
-          <CreditCard className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-          <span className="text-xs font-mono">
-            {contract.iban ? '****' + contract.iban.slice(-4) : '-'}
-          </span>
-        </div>
-      ),
+      renderCell: (contract) => {
+        const isEditing = editingCell?.contractId === contract.id && editingCell?.field === 'iban';
+        if (isEditing) {
+          return (
+            <Input
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value.toUpperCase())}
+              onBlur={() => {
+                if (editValue !== contract.iban) {
+                  setPendingEdit({ contractId: contract.id, field: 'iban', value: editValue });
+                  setShowConfirmDialog(true);
+                }
+                setEditingCell(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (editValue !== contract.iban) {
+                    setPendingEdit({ contractId: contract.id, field: 'iban', value: editValue });
+                    setShowConfirmDialog(true);
+                  }
+                  setEditingCell(null);
+                } else if (e.key === 'Escape') {
+                  setEditingCell(null);
+                }
+              }}
+              className="w-[100px] h-7 text-xs"
+              autoFocus
+              placeholder="NL..."
+            />
+          );
+        }
+        return (
+          <div 
+            className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditingCell({ contractId: contract.id, field: 'iban' });
+              setEditValue(contract.iban);
+            }}
+            title="Dubbelklik om te bewerken"
+          >
+            <CreditCard className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs font-mono">
+              {contract.iban ? '****' + contract.iban.slice(-4) : '-'}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: 'typeAbonnement',
       header: 'Abonnement',
       sortable: true,
       renderCell: (contract) => (
-        <div className="flex items-center gap-1">
-          <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-          <span className="text-xs capitalize">{contract.typeAbonnement}</span>
-        </div>
+        <Select
+          value={contract.typeAbonnement}
+          onValueChange={async (value: 'onderhoud' | 'service-plus') => {
+            try {
+              const contractWithNewType = { ...contract, typeAbonnement: value };
+              const newPrice = recalculatePrice(contractWithNewType, parseInt(contract.onderhoudsfrequentie));
+              
+              if (newPrice === null) {
+                toast({
+                  title: "Waarschuwing",
+                  description: "Kon nieuwe prijs niet berekenen. Alleen abonnement wordt bijgewerkt.",
+                  variant: "destructive"
+                });
+                await updateContractField(contract.id, 'typeAbonnement', value);
+                return;
+              }
+              
+              await updateContractField(contract.id, 'typeAbonnement', value);
+              await updateContractField(contract.id, 'maandelijksePrijs', newPrice);
+              
+              toast({
+                title: "Bijgewerkt",
+                description: `Abonnement: ${value} → Prijs: €${newPrice.toFixed(2)}/mnd`
+              });
+            } catch (error) {
+              console.error('Error updating abonnement:', error);
+              toast({
+                title: "Fout",
+                description: "Kon abonnement niet bijwerken.",
+                variant: "destructive"
+              });
+            }
+          }}
+        >
+          <SelectTrigger className="w-[110px] h-7 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="onderhoud">Onderhoud</SelectItem>
+            <SelectItem value="service-plus">Service Plus</SelectItem>
+          </SelectContent>
+        </Select>
       ),
     },
     {
@@ -606,7 +989,7 @@ function UnifiedDataPageContent() {
               
               // Recalculate price with new monitoring setting
               const contractWithNewMonitoring = { ...contract, monitoring: value };
-              const newPrice = recalculatePrice(contractWithNewMonitoring, contract.onderhoudsfrequentie);
+              const newPrice = recalculatePrice(contractWithNewMonitoring, parseInt(contract.onderhoudsfrequentie));
               
               if (newPrice === null) {
                 toast({
@@ -661,9 +1044,51 @@ function UnifiedDataPageContent() {
       sortable: true,
       renderCell: (contract) => {
         const price = contract.maandelijksePrijs;
-        console.log(`Rendering price for contract ${contract.id}:`, price);
+        const isEditing = editingCell?.contractId === contract.id && editingCell?.field === 'maandelijksePrijs';
+        if (isEditing) {
+          return (
+            <Input
+              type="number"
+              step="0.01"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => {
+                const newPrice = parseFloat(editValue);
+                if (!isNaN(newPrice) && newPrice !== price) {
+                  setPendingEdit({ contractId: contract.id, field: 'maandelijksePrijs', value: String(newPrice) });
+                  setShowConfirmDialog(true);
+                }
+                setEditingCell(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const newPrice = parseFloat(editValue);
+                  if (!isNaN(newPrice) && newPrice !== price) {
+                    setPendingEdit({ contractId: contract.id, field: 'maandelijksePrijs', value: String(newPrice) });
+                    setShowConfirmDialog(true);
+                  }
+                  setEditingCell(null);
+                } else if (e.key === 'Escape') {
+                  setEditingCell(null);
+                }
+              }}
+              className="w-[80px] h-7 text-xs"
+              autoFocus
+            />
+          );
+        }
         return (
-          <span className="font-semibold text-green-600 text-sm">
+          <span 
+            className="font-semibold text-green-600 text-sm cursor-pointer hover:text-green-700"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditingCell({ contractId: contract.id, field: 'maandelijksePrijs' });
+              setEditValue(price?.toString() || '0');
+            }}
+            title="Dubbelklik om te bewerken"
+          >
             {price ? `€${price.toFixed(2)}` : '-'}
           </span>
         );
@@ -675,9 +1100,53 @@ function UnifiedDataPageContent() {
       sortable: true,
       renderCell: (contract) => {
         const dateStr = contract.ingangsdatum;
+        const isEditing = editingCell?.contractId === contract.id && editingCell?.field === 'ingangsdatum';
+        if (isEditing) {
+          return (
+            <Input
+              type="date"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => {
+                if (editValue !== dateStr) {
+                  setPendingEdit({ contractId: contract.id, field: 'ingangsdatum', value: editValue });
+                  setShowConfirmDialog(true);
+                }
+                setEditingCell(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (editValue !== dateStr) {
+                    setPendingEdit({ contractId: contract.id, field: 'ingangsdatum', value: editValue });
+                    setShowConfirmDialog(true);
+                  }
+                  setEditingCell(null);
+                } else if (e.key === 'Escape') {
+                  setEditingCell(null);
+                }
+              }}
+              className="w-[130px] h-7 text-xs"
+              autoFocus
+            />
+          );
+        }
         if (!dateStr) return '-';
         const dateObj = parseISO(dateStr);
-        return <span className="text-xs">{isValidDate(dateObj) ? format(dateObj, 'dd-MM-yyyy') : '-'}</span>;
+        return (
+          <span 
+            className="text-xs cursor-pointer hover:text-primary transition-colors"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditingCell({ contractId: contract.id, field: 'ingangsdatum' });
+              setEditValue(dateStr);
+            }}
+            title="Dubbelklik om te bewerken"
+          >
+            {isValidDate(dateObj) ? format(dateObj, 'dd-MM-yyyy') : '-'}
+          </span>
+        );
       },
     },
   ];
@@ -1099,6 +1568,55 @@ service cloud.firestore {
         )}
       </div>
       
+      {/* Confirmation Dialog for Edits */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Wijziging bevestigen</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                Weet u zeker dat u deze wijziging wilt doorvoeren?
+                {pendingEdit && (
+                  <div className="mt-2 p-3 bg-muted rounded text-sm">
+                    <div><strong>Veld:</strong> {pendingEdit.field}</div>
+                    <div><strong>Nieuwe waarde:</strong> {String(pendingEdit.value)}</div>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setPendingEdit(null);
+              setShowConfirmDialog(false);
+            }}>
+              Nee
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={async () => {
+              if (pendingEdit) {
+                try {
+                  await updateContractField(pendingEdit.contractId, pendingEdit.field, pendingEdit.value);
+                  toast({
+                    title: "Bijgewerkt",
+                    description: `${pendingEdit.field} is succesvol bijgewerkt.`
+                  });
+                } catch (error) {
+                  toast({
+                    title: "Fout",
+                    description: "Kon wijziging niet opslaan.",
+                    variant: "destructive"
+                  });
+                }
+                setPendingEdit(null);
+              }
+              setShowConfirmDialog(false);
+            }}>
+              Ja
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Order Summary Modal */}
       <Dialog open={!!selectedContract} onOpenChange={(open) => !open && setSelectedContract(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
