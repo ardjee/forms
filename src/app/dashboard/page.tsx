@@ -401,6 +401,25 @@ function UnifiedDataPageContent() {
               return 'bg-gray-100 text-gray-800 border-gray-200';
           }
         };
+        if (contract.status === 'Nieuw' || contract.status === 'Actief') {
+          const targetStatus = contract.status === 'Nieuw' ? 'Actief' : 'Nieuw';
+          const title = contract.status === 'Nieuw' ? 'Dubbelklik om te activeren' : 'Dubbelklik om terug te zetten naar Nieuw';
+          return (
+            <div
+              className="cursor-pointer"
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                setPendingEdit({ contractId: contract.id, field: 'status', value: targetStatus });
+                setShowConfirmDialog(true);
+              }}
+              title={title}
+            >
+              <Badge variant="outline" className={getStatusStyle(contract.status)}>
+                {contract.status}
+              </Badge>
+            </div>
+          );
+        }
         return (
           <Badge variant="outline" className={getStatusStyle(contract.status)}>
             {contract.status}
